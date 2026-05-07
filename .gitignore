@@ -1,0 +1,7 @@
+# 本地 vendor / 对照用克隆（各自独立 git 仓库，不作为本仓库完整快照）
+async-rdma/
+rdma-mummy-sys/
+rdma-sys/
+rust-ibverbs/
+rust-rdma-io/
+sideway/
