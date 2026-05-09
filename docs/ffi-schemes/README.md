@@ -1,16 +1,64 @@
 # Rust RDMA 相关 FFI 方案速览与对比
 
-本目录按 **「如何把 libibverbs（及可选 librdmacm）接到 Rust」** 拆分文档，便于与 DatenLord / RDMA-Rust / rust-ibverbs / rust-rdma-io 等路线对照。
+本目录按 **「如何把 libibverbs（及可选 librdmacm）接到 Rust」** 拆分文档。索引不仅列出文件名，还对 **FFI 边界、架构分层、inline/链接策略** 做简要说明；细节见各专题文档正文。
 
-## 文档索引
+---
 
-| 文件 | 核心手法 | 代表 |
-|------|-----------|------|
-| [bindgen-vendored-headers-fnptr-in-safe-layer.md](./bindgen-vendored-headers-fnptr-in-safe-layer.md) | vendor 头 + bindgen；inline 在 **safe 层**走 **ops 函数指针** | jonhoo/rust-ibverbs |
-| [bindgen-system-headers-manual-inline-in-sys.md](./bindgen-system-headers-manual-inline-in-sys.md) | 系统头 + bindgen；inline 在 **`-sys` 手写 Rust** | datenlord/rdma-sys → async-rdma |
-| [mummy-stub-bindgen-static-stub-dlopen-runtime.md](./mummy-stub-bindgen-static-stub-dlopen-runtime.md) | **mummy C 桩** + bindgen；运行时 **dlopen** 真 `.so` | rdma-mummy-sys → sideway |
-| [c-wrapper-pregenerated-bnd-sys-headers.md](./c-wrapper-pregenerated-bnd-sys-headers.md) | **薄 C wrapper** 展开 inline + **预生成** Rust（bnd） | rust-rdma-io / rdma-io-sys |
-| [bindgen-system-subset-postprocess-ruapc.md](./bindgen-system-subset-postprocess-ruapc.md) | 系统头 + bindgen **窄白名单** + **syn** 后处理 | SF-Zhou/ruapc-rdma-sys |
+## 文档索引（按架构思路分组）
+
+### A. Bindgen + 头文件 +「谁在 Rust 里补 inline 语义」
+
+两类主流分叉：**inline 语义放在 `-sys`**（DatenLord），或 **放在上层 safe crate**（jonhoo）。
+
+#### [bindgen-vendored-headers-fnptr-in-safe-layer.md](./bindgen-vendored-headers-fnptr-in-safe-layer.md) — jonhoo/rust-ibverbs（`ibverbs-sys` + `ibverbs`）
+
+**一句话：** 用 **vendor 的 rdma-core 头文件** 驱动 bindgen，生成与 **系统 `libibverbs.so`** 链接的 `extern "C"`；`verbs.h` 里大量 **`static inline`** **不在 `-sys` 补全**，而是由 **`ibverbs` 安全封装层** 在调用业务 API 时直接 **`context.ops.*` 函数指针派发**。
+
+**架构要点：** FFI 的「完整性」拆成两半——`-sys` 提供类型与非内联符号；**数据路径热点（post_send / poll_cq 等）的语义等价实现 resides in safe 层**。好处是 `-sys` 生成逻辑单纯；代价是 **只想依赖 `ibverbs-sys` 裸调 verbs 时，仍需自己抄写 ops 派发**。详见专题文中的分层图与调用链。
+
+#### [bindgen-system-headers-manual-inline-in-sys.md](./bindgen-system-headers-manual-inline-in-sys.md) — datenlord/rdma-sys → async-rdma
+
+**一句话：** **pkg-config** 指向 **本机系统头文件**，bindgen 生成主体绑定；对 **`verbs.h` inline** 在 **`rdma-sys/src/verbs.rs`** 用 **`#[inline] pub unsafe fn`** 集中手写，从 `qp/cq/context` 取 **`ops` 再间接调用**，使 **`rdma-sys` 单独即可覆盖数据路径**。
+
+**架构要点：** **单一 `-sys` crate 自洽**：`bindings.rs` + **手写 `verbs.rs` / `types.rs`**（blocklist 的 union 结构）。上层 **`async-rdma`** **不再跑 bindgen**，在 sys 之上做 **异步与安全抽象（Tokio 等）**。这是典型的 **「FFI 与 inline 补齐同层，safe/async 另一层」**。详见专题文。
+
+### B. C 参与绑定边界：桩 dlopen vs 薄 wrapper
+
+两者都让 **C 编译器或 C 桩**承担「inline / 符号稳定性」的一部分，但 **链接与运行时模型不同**。
+
+#### [mummy-stub-bindgen-static-stub-dlopen-runtime.md](./mummy-stub-bindgen-static-stub-dlopen-runtime.md) — rdma-mummy-sys → sideway
+
+**一句话：** 编译期链接的是 **`rdma-core-mummy` 静态桩**；桩在 **运行时 `dlopen` 真实 `libibverbs`/`librdmacm`**，用 **`dlsym`** 填函数指针表；bindgen 只对桩暴露的 **`extern "C"`** 生成 Rust，**通常无需在 Rust 手写一整份 inline 派发**。
+
+**架构要点：** **FFI 的稳定边界在「桩提供的符号」**，而非「系统头文件里的 inline 正文」。上层 **`sideway`** 依赖 **`rdma-mummy-sys`**，提供 **现代 verbs API、builder、CQ ex 等 Rust 封装**（刻意保留部分 `unsafe`，完整 safe 由更上层或用户自建）。与 DatenLord **同样是 sys + 封装两层**，但 **sys 内核是「桩 + dlopen」而非「Rust 手写 verbs.rs」**。详见专题文。
+
+#### [c-wrapper-pregenerated-bnd-sys-headers.md](./c-wrapper-pregenerated-bnd-sys-headers.md) — rust-rdma-io / `rdma-io-sys`
+
+**一句话：** **`wrapper.c`** 为每个需要的 inline API 提供 **`rdma_wrap_*` 非 inline C 函数**，由 **C 编译器**展开对真实 `ibv_*` 的调用；用户构建时 **`cc` 只编 wrapper**，**Rust FFI 声明来自仓库内已提交的、bnd 预生成模块**，**消费者构建不跑 bindgen**。
+
+**架构要点：** **符号边界 = 薄 wrapper 静态库 + 动态链官方 `.so`**（不是 mummy 的 dlopen 桩）。仓库内还有 **`rdma-io`** 等对 sys 的进一步封装（专题文会写清 **sys vs 上层 crate** 分工）。详见专题文。
+
+### C. 窄表面 + 生成码二次加工
+
+#### [bindgen-system-subset-postprocess-ruapc.md](./bindgen-system-subset-postprocess-ruapc.md) — SF-Zhou/ruapc-rdma-sys
+
+**一句话：** 仍是 **系统头 + pkg-config + bindgen + 动态链 `libibverbs`**，但通过 **极窄 allowlist** 控制绑定表面；生成后 **`syn`/`prettyplease` 改写 AST**，把部分字段换成 **`FwVer`、`Guid` 等强类型**，并对关键结构 **`derive(Serialize, Deserialize, JsonSchema)`**。
+
+**架构要点：** **没有第二层「大型官方 safe verbs」与本仓库其它专题对等**——定位是 **贴合 ruapc 场景的 sys 层**；**inline/post_send 等**依赖 **`.so` 导出符号**与 allowlist 对齐，而非 C wrapper 或 Rust `verbs.rs` 大全。上层逻辑在 ruapc **其它 crate**。详见专题文。
+
+---
+
+## 索引对照表（快速检索）
+
+| 文件 | 头文件来源 | inline / 热点路径 | 链接 / 运行时 | 典型上层 |
+|------|------------|-------------------|---------------|----------|
+| [bindgen-vendored-headers-fnptr-in-safe-layer.md](./bindgen-vendored-headers-fnptr-in-safe-layer.md) | vendor rdma-core（cmake） | **safe 层 `ops` 指针** | 链 `libibverbs.so` | `ibverbs` |
+| [bindgen-system-headers-manual-inline-in-sys.md](./bindgen-system-headers-manual-inline-in-sys.md) | 系统 pkg-config | **`rdma-sys` `verbs.rs` 手写** | 链 ibverbs + rdmacm | `async-rdma` |
+| [mummy-stub-bindgen-static-stub-dlopen-runtime.md](./mummy-stub-bindgen-static-stub-dlopen-runtime.md) | mummy 捆绑 include | **C 桩 + dlsym** | 静态桩 → 运行时开 `.so` | `sideway` |
+| [c-wrapper-pregenerated-bnd-sys-headers.md](./c-wrapper-pregenerated-bnd-sys-headers.md) | 系统（生成管线） | **薄 C `rdma_wrap_*`** | 静态 wrapper + `.so` | `rdma-io` 等 |
+| [bindgen-system-subset-postprocess-ruapc.md](./bindgen-system-subset-postprocess-ruapc.md) | 系统 pkg-config | **依赖 `.so` 导出 + allowlist** | 动态 `libibverbs` | ruapc 其它 crate |
+
+---
 
 ## 术语：手写 inline、dlopen/dlsym、为什么要这么做
 
@@ -76,9 +124,9 @@ pub unsafe fn ibv_post_send(
 | rust-rdma-io (`rdma-io-sys`) | **否**（绑定已预生成在 `src/rdma/`） | **bnd**（维护者生成）；**`cc`** 只编 `wrapper.c` |
 | ruapc-rdma-sys | **是** → `$OUT_DIR/bindings.rs`（再 AST 改写） | **bindgen** + **syn/prettyplease** |
 
-除 bindgen/bnd 外，各路线普遍还有：**pkg-config 或 cmake**、**手写类型/verbs** 或 **C 桩/wrapper**、**链接指令**、以及上游 **safe/async crate**。详见各方案文档中的 **「Bindgen」** 与 **「bindgen 之外」** 两节。
+除 bindgen/bnd 外，各路线普遍还有：**pkg-config 或 cmake**、**手写类型/verbs** 或 **C 桩/wrapper**、**链接指令**、以及上游 **safe/async crate**。详见各方案文档。
 
-## 一张表看清差异
+## 一张表看清差异（维度汇总）
 
 | 方案 | 编译期头文件来源 | 解决 inline 的方式 | 链接/runtime | `-sys` 能否单独覆盖数据路径 |
 |------|------------------|---------------------|--------------|---------------------------|
@@ -159,7 +207,7 @@ pub unsafe fn ibv_post_send(
 
 ## 工作区对照
 
-路径 `rust-ibverbs/`、`rdma-sys/`、`rdma-mummy-sys/`、`sideway/`、`rust-rdma-io/` 为本仓库内可参考的源码树；更细的动机叙述见 `rust-rdma-io/docs/background/Bindings.md`。
+路径 `rust-ibverbs/`、`rdma-sys/`、`rdma-mummy-sys/`、`sideway/`、`rust-rdma-io/` 为本仓库内可参考的源码树；更细的动机叙述见 `rust-rdma-io/docs/background/Bindings.md`（相对本仓库根目录）。
 
 ---
 
