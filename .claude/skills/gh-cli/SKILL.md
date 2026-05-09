@@ -9,22 +9,14 @@ Comprehensive reference for GitHub CLI (gh) - work seamlessly with GitHub from t
 
 **Version:** 2.85.0 (current as of January 2026)
 
-## Cursor Agent：执行 `gh` 时必须请求完整权限（`all`），不要用沙箱
+## Cursor Agent：`gh` / GitHub 远端操作须申请 **`all`**
 
-在 Cursor 里由 **Agent 代为执行终端命令**时，凡是会访问 **`api.github.com`**、读写 **密钥环（keyring）**、或需要稳定 **TLS/DNS/系统证书路径** 的操作，**一律应请求「完整权限 / `all`」**，而不是仅勾选「网络」或「网络 + git 写入」后仍在受限沙箱里跑。
+- 执行任一 **`gh`** 子命令，或 **`git push`/`pull`** 涉及 **`api.github.com`** / 凭证（HTTPS token / **keyring**）的路径：**为该 Shell 勾选 Cursor Agent 的完整权限 `all`**。
+- **不要**仅以 **`network`**，或 **`network` + `git_write`**，当作等价于本机终端来跑上述命令。
+- **`all` / `network` / `git_write`** 是 Agent **对本终端会话的放行选项**，不是 `gh` 的 flag。
+- 失败或未连通时：**改用 `all`** 重试同一命令。
 
-| 做法 | 结果 |
-|------|------|
-| 仅用沙箱 + `network`（以及常见的 `git_write`）跑 `gh repo create`、`gh auth status`、`gh api` 等 | **经常失败**：例如 `error connecting to api.github.com`；或无法从 keyring 读到 token，误判为未登录。 |
-| 使用 **`all`**（关闭该层沙箱，等同本机普通终端环境） | **`gh` 可正常连 GitHub、读 keyring、推送**。 |
-
-**原因简述：** 受限沙箱未必放行整条出站 HTTPS 链路，也可能拦住 **密钥环 / 会话总线** 等 IPC；仅声明 `network` **不等于**与桌面终端等价。
-
-**注意：** 这里的 **`all` / `network` / `git_write`** 指 **Cursor Agent 对该条 Shell 的放行级别**，**不是** `gh` 的子命令或 flag。
-
-**实践：** 代理用户创建仓库、登录检查、`gh api`、`git push`（经 SSH/HTTPS）时，**默认申请 `all`**；若第一次失败，不要用「再多勾一项 network」凑合，应改为 **`all`** 后重试。
-
-**English (for agents):** Always request **`all`** when invoking `gh` from Cursor Agent; **`network` + `git_write` under sandbox is unreliable** for `api.github.com` and OS keyring.
+For agents (English): use **`all`** for any Agent-invoked shell that runs **`gh`** or **`git`** against GitHub over HTTPS/token/keyring paths—not **`network`** alone.
 
 ## Prerequisites
 
