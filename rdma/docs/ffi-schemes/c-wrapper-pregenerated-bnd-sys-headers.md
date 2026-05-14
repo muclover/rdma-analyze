@@ -89,7 +89,7 @@
 | 工作 | 说明 |
 |------|------|
 | **`wrapper.c` / `wrapper.h`** | 为每个需在 Rust 侧可调用的 **`static inline`**（及同类符号）提供 **`rdma_wrap_*` 非 inline C 函数，由 **C 编译器**完成 **inline 展开** 与 **ABI 正确的调用**。 |
-| **`cc` 编译静态 wrapper** | 与用户 crate 链在一起时：**静态 `rdma_wrapper` + 动态 `libibverbs` / `librdmacm`**（与工作区 `rdma-io-sys/build.rs`、`Cargo.toml` 一致）。 |
+| **`cc` 编译静态 wrapper** | 与用户 crate 链在一起时：**静态 `rdma_wrapper` + 动态 `libibverbs` / `librdmacm`**（与工作区 `rdma/rust-rdma-io/rdma-io-sys/build.rs`、`Cargo.toml` 一致）。 |
 | **`bnd-rdma-gen` + 分区** | 从系统 **`infiniband/*.h`、`rdma/*.h`** 与 **自建 wrapper 头** 抽取类型与函数签名；与 **`bnd-linux`（如 `__be*`）、`bnd-posix`** **交叉引用**，避免重复定义 POSIX 类型。 |
 | **维护流程** | API 变更时：**改 wrapper → 重跑生成器 → 提交 diff**；与 bindgen 方案的「改 `build.rs`/flags → 每次 OUT_DIR 再生」流程不同，但 **人工审计绑定 diff** 更直观。 |
 
@@ -113,9 +113,9 @@
 
 ## 与工作区文件对应关系
 
-- `rust-rdma-io/rdma-io-sys/build.rs`：仅 **`cc::Build`** 编译 wrapper。
-- `rust-rdma-io/rdma-io-sys/wrapper/wrapper.c`：`rdma_wrap_ibv_*` 系列函数。
-- `rust-rdma-io/docs/background/Bindings.md`：**Option D** 与设计决议（为何不用 mummy、为何用 bnd 等）。
+- `rdma/rust-rdma-io/rdma-io-sys/build.rs`：仅 **`cc::Build`** 编译 wrapper。
+- `rdma/rust-rdma-io/rdma-io-sys/wrapper/wrapper.c`：`rdma_wrap_ibv_*` 系列函数。
+- `rdma/rust-rdma-io/docs/background/Bindings.md`：**Option D** 与设计决议（为何不用 mummy、为何用 bnd 等）。
 
 ---
 

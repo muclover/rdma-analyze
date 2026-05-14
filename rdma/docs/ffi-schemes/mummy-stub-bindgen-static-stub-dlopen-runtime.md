@@ -91,7 +91,7 @@
 
 | 项 | 说明 |
 |----|------|
-| **是否使用** | **是**。与工作区 **`rdma-mummy-sys/build.rs`** 一致：构建时用 **`bindgen::Builder`** 生成 **`OUT_DIR/bindings.rs`**。 |
+| **是否使用** | **是**。与工作区 **`rdma/rdma-mummy-sys/build.rs`** 一致：构建时用 **`bindgen::Builder`** 生成 **`OUT_DIR/bindings.rs`**。 |
 | **头文件 / `-I` 从哪来** | **`clang_arg("-I./rdma-core-mummy/include")`**，配合 **`src/bindings.h`**；不依赖本机 **`libibverbs-dev`** 也能生成 **与桩配套** 的头视图。 |
 | **与 DatenLord 类同的配置** | **`allowlist_function("ibv_.*")`、`rdma_.*`**，对疑难类型 **`blocklist_type`**（`ibv_send_wr`、`ibv_wc` 等）、**`bitfield_enum` / `constified_enum_module`**、**`disable_untagged_union()`** 等与 **`rdma-sys`** 高度同源。 |
 | **bindgen 回调** | 例如 **`CompatParseCallback`**：把 **`ibv_query_port`** 生成的符号 **改名为 `ibv_query_port_compat`**，避免与手写或其它符号冲突（见工作区 `build.rs`）。 |
@@ -122,7 +122,7 @@
 
 ## 补充：进一步阅读
 
-桩侧 **`dlopen` / 符号表** 的细节见 **`rdma-core-mummy`** 源码；文字动机与工作区 **`rust-rdma-io/docs/background/Bindings.md`** 中 mummy 小节。
+桩侧 **`dlopen` / 符号表** 的细节见 **`rdma-core-mummy`** 源码；文字动机与工作区 **`rdma/rust-rdma-io/docs/background/Bindings.md`** 中 mummy 小节。
 
 ---
 

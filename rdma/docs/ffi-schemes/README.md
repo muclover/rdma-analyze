@@ -1,6 +1,8 @@
 # Rust RDMA 相关 FFI 方案速览与对比
 
-本目录按 **「如何把 libibverbs（及可选 librdmacm）接到 Rust」** 拆分文档。索引不仅列出文件名，还对 **FFI 边界、架构分层、inline/链接策略** 做简要说明；细节见各专题文档正文。
+本目录按 **「如何把 libibverbs（及可选 librdmacm）接到 Rust」** 拆分文档。索引不仅列出文件名，还对 **FFI 边界、架构分层、inline/链接策略** 做简要说明；细节见各专题文档正文。**各方案的线程模型、高并发 RDMA 实践，以及 Rust 同步 / 异步选型**见 [concurrency-threading-async-vs-sync.md](./concurrency-threading-async-vs-sync.md)。
+
+**与仓库根 `ffi-docs` 的关系**：若只需一份压缩总览（五条主线对照、与 `rust-ffi-project` 通用样本的心智映射），见 [ffi-docs/rdma-ffi-schemes.md](../../../ffi-docs/rdma-ffi-schemes.md)。新项目完整 FFI **设计文档骨架**见 [ffi-docs/design-output-template.md](../../../ffi-docs/design-output-template.md)。**权威长文与代码片段**仍以本目录各专题为准。
 
 ---
 
@@ -18,7 +20,7 @@
 
 #### [bindgen-system-headers-manual-inline-in-sys.md](./bindgen-system-headers-manual-inline-in-sys.md) — datenlord/rdma-sys → async-rdma
 
-**一句话：** **pkg-config** 指向 **本机系统头文件**，bindgen 生成主体绑定；对 **`verbs.h` inline** 在 **`rdma-sys/src/verbs.rs`** 用 **`#[inline] pub unsafe fn`** 集中手写，从 `qp/cq/context` 取 **`ops` 再间接调用**，使 **`rdma-sys` 单独即可覆盖数据路径**。
+**一句话：** **pkg-config** 指向 **本机系统头文件**，bindgen 生成主体绑定；对 **`verbs.h` inline** 在 **`rdma/rdma-sys/src/verbs.rs`** 用 **`#[inline] pub unsafe fn`** 集中手写，从 `qp/cq/context` 取 **`ops` 再间接调用**，使 **`rdma-sys` 单独即可覆盖数据路径**。
 
 **架构要点：** **单一 `-sys` crate 自洽**：`bindings.rs` + **手写 `verbs.rs` / `types.rs`**（blocklist 的 union 结构）。上层 **`async-rdma`** **不再跑 bindgen**，在 sys 之上做 **异步与安全抽象（Tokio 等）**。这是典型的 **「FFI 与 inline 补齐同层，safe/async 另一层」**。详见专题文。
 
@@ -46,6 +48,14 @@
 
 **架构要点：** **没有第二层「大型官方 safe verbs」与本仓库其它专题对等**——定位是 **贴合 ruapc 场景的 sys 层**；**inline/post_send 等**依赖 **`.so` 导出符号**与 allowlist 对齐，而非 C wrapper 或 Rust `verbs.rs` 大全。上层逻辑在 ruapc **其它 crate**。详见专题文。
 
+### D. 并发、线程模型与 Rust 同步 / 异步选型
+
+#### [concurrency-threading-async-vs-sync.md](./concurrency-threading-async-vs-sync.md) — 横跨五条 FFI 主线
+
+**一句话：** 归纳 **各方案自带的线程/运行时假设**（若有）、**在同步封装下如何做高并发 RDMA**（in-flight、批处理、poll/event、`thread-per-core`、`channel` 分工），并单独讨论 **`async-rdma`（Tokio）** 与其余 **同步栈** 的典型用法与选型场景。
+
+**架构要点：** FFI 方案解决 **绑定与符号**；**高并发**绝大多数仍落在 **应用线程模型 + CQ 策略**。只有 **DatenLord `async-rdma`** 把 **异步封装**作为清晰产品层；**Sideway** 等公开取向为 **同步 verbs + 专用线程**。详见该文 §1–§7 的分栈说明与决策表。**文末附录（§10–§13）**补充：**C 侧 post/poll 代码示意**、**与 Redis 单线程类比**、**Rust async / 多 runtime 取舍**、**Tokio TCP + FFI RDMA 桥接示意**、**四种数据传输形态的 2×2 Rust 示意（§13）**。
+
 ---
 
 ## 索引对照表（快速检索）
@@ -57,6 +67,7 @@
 | [mummy-stub-bindgen-static-stub-dlopen-runtime.md](./mummy-stub-bindgen-static-stub-dlopen-runtime.md) | mummy 捆绑 include | **C 桩 + dlsym** | 静态桩 → 运行时开 `.so` | `sideway` |
 | [c-wrapper-pregenerated-bnd-sys-headers.md](./c-wrapper-pregenerated-bnd-sys-headers.md) | 系统（生成管线） | **薄 C `rdma_wrap_*`** | 静态 wrapper + `.so` | `rdma-io` 等 |
 | [bindgen-system-subset-postprocess-ruapc.md](./bindgen-system-subset-postprocess-ruapc.md) | 系统 pkg-config | **依赖 `.so` 导出 + allowlist** | 动态 `libibverbs` | ruapc 其它 crate |
+| [concurrency-threading-async-vs-sync.md](./concurrency-threading-async-vs-sync.md) | — | — | — | **并发专题**：五栈线程模型 + 高并发实践 + async/sync 选型 |
 
 ---
 
@@ -80,7 +91,7 @@
 
 ### 最小代码实例（C 头文件示意 ↔ Rust 手写等价）
 
-下面是 **`ibv_poll_cq`** 一例：**先**给出头文件里 **inline + ops** 的典型语义（示意，简写），**再**给出工作区 **`rdma-sys`** 中与之一致的 **手写**实现。
+下面是 **`ibv_poll_cq`** 一例：**先**给出头文件里 **inline + ops** 的典型语义（示意，简写），**再**给出工作区 **`rdma/rdma-sys`** 中与之一致的 **手写**实现。
 
 ```c
 /* verbs.h 典型语义（示意，非逐字拷贝 upstream） */
@@ -92,7 +103,7 @@ static inline int ibv_poll_cq(struct ibv_cq *cq, int num_entries,
 
 bindgen 往往**不会**产出可直接调用、且与运行时 ops 表一致的 `ibv_poll_cq` Rust 实现；于是在 `-sys` 层手写：
 
-```628:632:rdma-sys/src/verbs.rs
+```628:632:rdma/rdma-sys/src/verbs.rs
 #[inline]
 pub unsafe fn ibv_poll_cq(cq: *mut ibv_cq, num_entries: i32, wc: *mut ibv_wc) -> c_int {
     (*(*cq).context).ops.poll_cq.unwrap()(cq, num_entries, wc)
@@ -101,7 +112,7 @@ pub unsafe fn ibv_poll_cq(cq: *mut ibv_cq, num_entries: i32, wc: *mut ibv_wc) ->
 
 `ibv_post_send` 同理：**从 `qp` 取 `context`，再取 `ops.post_send`**：
 
-```932:939:rdma-sys/src/verbs.rs
+```932:939:rdma/rdma-sys/src/verbs.rs
 #[inline]
 pub unsafe fn ibv_post_send(
     qp: *mut ibv_qp,
@@ -145,7 +156,7 @@ pub unsafe fn ibv_post_send(
 | **纯手工 `extern "C"`** | 不用 bindgen，手写声明 + 少量类型 | 极简原型、教学；规模一大即难维护 |
 | **bindgen 一次生成，绑定检入仓库** | 维护者在有 `-dev`/Docker 的环境里跑 bindgen，把 `bindings.rs` **提交进 git**，用户 `cargo build` **不再执行 bindgen** | 与 rust-rdma-io 的「预生成」思想相同，只是生成器仍是 bindgen；利于 docs.rs、可 diff 审计 |
 | **Rust 侧 `libloading` / `dlopen`** | 无 C 桩，在 Rust 里 `dlopen` + `get`，手写符号名字符串与函数类型 | 可做可选插件式 RDMA；易错（符号版本、类型不匹配），全 verbs 表面积大时不划算 |
-| **系统头 + bindgen + 大规模手写 inline** | 与 `rdma-sys` 同类，但手写包装函数更多、版本探测更细 | [Nugine/rdma](https://github.com/Nugine/rdma)（参见工作区 `rust-rdma-io/docs/background/Bindings.md`） |
+| **系统头 + bindgen + 大规模手写 inline** | 与 `rdma-sys` 同类，但手写包装函数更多、版本探测更细 | [Nugine/rdma](https://github.com/Nugine/rdma)（参见工作区 `rdma/rust-rdma-io/docs/background/Bindings.md`） |
 | **多 ABI / 厂商树探测** | 探测 MLNX_OFED、主线 rdma-core、或由源码构建等，feature 切换不同绑定模块 | [rrddmma](https://github.com/GiantVM/rrddmma) 一类学术 / 实验栈 |
 | **包装既有 C++ RDMA 库** | `cxx`、`autocxx` 等对接 C++ 类型与 RAII | 历史上如包装 C++ Infinity 的仓库（多已停更）；**不等于**直接绑 `verbs.h` |
 | **厂商直连 verbs（如 `mlx5dv`）** | 另一套头文件与能力模型，常与普通 ibverbs 叠用 | NVIDIA/Mellanox 扩展特性；需单独 FFI，不在「通用 ibverbs 五选一」里 |
@@ -207,7 +218,7 @@ pub unsafe fn ibv_post_send(
 
 ## 工作区对照
 
-路径 `rust-ibverbs/`、`rdma-sys/`、`rdma-mummy-sys/`、`sideway/`、`rust-rdma-io/` 为本仓库内可参考的源码树；更细的动机叙述见 `rust-rdma-io/docs/background/Bindings.md`（相对本仓库根目录）。
+路径 `rdma/rust-ibverbs/`、`rdma/rdma-sys/`、`rdma/rdma-mummy-sys/`、`rdma/sideway/`、`rdma/rust-rdma-io/` 为本仓库内可参考的源码树；更细的动机叙述见 `rdma/rust-rdma-io/docs/background/Bindings.md`（相对本仓库根目录）。
 
 ---
 
