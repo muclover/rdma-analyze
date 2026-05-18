@@ -1,0 +1,30 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library")
+
+package(default_visibility = ["//visibility:public"])
+
+# Safe Rust wrapper for ibverbs
+rust_library(
+    name = "ibverbs",
+    srcs = glob(["src/**/*.rs"]),
+    aliases = {
+        "//ibverbs-sys": "ffi",
+    },
+    crate_features = ["serde"],
+    crate_name = "ibverbs",
+    edition = "2021",
+    deps = [
+        "//ibverbs-sys",
+        # These deps should be provided by the consuming workspace's crates repository
+        "@crates//:nix",
+        "@crates//:serde",
+    ],
+)
+
+# Loopback example for testing
+rust_binary(
+    name = "loopback",
+    srcs = ["examples/loopback.rs"],
+    edition = "2021",
+    deps = [":ibverbs"],
+)
+

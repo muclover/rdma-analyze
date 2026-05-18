@@ -1,0 +1,70 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust_bindgen//:defs.bzl", "rust_bindgen")
+
+package(default_visibility = ["//visibility:public"])
+
+# Minimal C library to provide link info for rust_bindgen
+# (rust_bindgen requires a cc_lib with static libraries for link info generation)
+cc_library(
+    name = "ibverbs_c",
+    srcs = ["empty.c"],
+    linkopts = ["-libverbs"],
+    deps = ["@rdma_core//:ibverbs_headers"],
+)
+
+# Generate FFI bindings directly from rdma-core verbs.h
+# Named "bindings" so output is bindings.rs (matching Cargo's OUT_DIR/bindings.rs)
+rust_bindgen(
+    name = "bindings",
+    bindgen_flags = [
+        "--no-layout-tests",
+        "--with-derive-default",
+        "--allowlist-function=ibv_.*",
+        "--allowlist-function=_ibv_.*",
+        "--allowlist-type=ibv_.*",
+        "--allowlist-var=IBV_LINK_LAYER_.*",
+        "--bitfield-enum=ibv_access_flags",
+        "--bitfield-enum=ibv_create_cq_wc_flags",
+        "--bitfield-enum=ibv_device_cap_flags",
+        "--bitfield-enum=ibv_odp_transport_cap_bits",
+        "--bitfield-enum=ibv_port_cap_flags",
+        "--bitfield-enum=ibv_port_cap_flags2",
+        "--bitfield-enum=ibv_qp_attr_mask",
+        "--bitfield-enum=ibv_qp_create_send_ops_flags",
+        "--bitfield-enum=ibv_qp_init_attr_mask",
+        "--bitfield-enum=ibv_qp_open_attr_mask",
+        "--bitfield-enum=ibv_raw_packet_caps",
+        "--bitfield-enum=ibv_rx_hash_fields",
+        "--bitfield-enum=ibv_send_flags",
+        "--bitfield-enum=ibv_srq_init_attr_mask",
+        "--bitfield-enum=ibv_wc_flags",
+        "--bitfield-enum=ibv_wq_attr_mask",
+        "--bitfield-enum=ibv_wq_flags",
+        "--bitfield-enum=ibv_xrcd_init_attr_mask",
+        "--default-enum-style=rust",
+        "--blocklist-type=ibv_wc",
+    ],
+    cc_lib = ":ibverbs_c",
+    header = "@rdma_core//:libibverbs/verbs.h",
+)
+
+# FFI bindings for libibverbs
+rust_library(
+    name = "ibverbs-sys",
+    srcs = [
+        "src/lib.rs",
+    ],
+    compile_data = [":bindings"],
+    crate_name = "ibverbs_sys",
+    edition = "2021",
+    rustc_env = {
+        # Set OUT_DIR relative to src/ directory where lib.rs lives
+        # bindings.rs is at ibverbs-sys/bindings.rs, lib.rs is at ibverbs-sys/src/lib.rs
+        "OUT_DIR": "..",
+    },
+    deps = [
+        ":ibverbs_c",
+    ],
+)
+

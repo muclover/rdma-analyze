@@ -1,0 +1,60 @@
+[workspace]
+resolver = "2"
+members = ["bnd-rdma-gen", "rdma-io", "rdma-io-quinn", "rdma-io-sys", "rdma-io-tests", "rdma-io-tonic", "tests/rdma-io-bench"]
+
+package.edition = "2024"
+package.license = "MIT"
+package.repository = "https://github.com/youyuanwu/rust-rdma-io"
+package.documentation = "https://github.com/youyuanwu/rust-rdma-io"
+
+[workspace.dependencies]
+# Internal crates
+rdma-io-sys = { path = "rdma-io-sys", version = "0.0.1" }
+rdma-io = { path = "rdma-io", version = "0.0.2" }
+rdma-io-tonic = { path = "rdma-io-tonic", version = "0.0.2" }
+rdma-io-quinn = { path = "rdma-io-quinn", version = "0.0.1" }
+
+# bnd ecosystem
+bnd-winmd = "0.0.6"
+bnd-linux = "0.0.6"
+bnd-macros = "0.0.6"
+
+# Core
+bitflags = "2"
+libc = "0.2"
+thiserror = "2"
+tracing = "0.1"
+
+# Async / IO
+futures-io = "0.3"
+futures-util = { version = "0.3", features = ["io"] }
+tokio = { version = "1", features = ["net"] }
+tokio-util = { version = "0.7", features = ["compat"] }
+tokio-stream = "0.1"
+
+# QUIC
+quinn = { version = "0.11", default-features = false, features = ["runtime-tokio", "rustls-ring"] }
+
+# gRPC / HTTP
+tonic = { version = "0.14", default-features = false }
+tonic-tls = { version = "0.7", features = ["openssl"] }
+tonic-h3 = { version = "0.0.5", default-features = false, features = ["quinn"] }
+tonic-prost = "0.14"
+prost = "0.14"
+hyper-util = { version = "0.1", features = ["tokio"] }
+tower-service = "0.3"
+http = "1"
+
+# TLS
+openssl = "0.10"
+rcgen = "0.14"
+
+# Build / codegen
+cc = "1"
+tonic-prost-build = "0.14"
+windows-bindgen = "0.66"
+
+# Dev / test
+tempfile = "3"
+test-log = { version = "0.2", features = ["trace"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

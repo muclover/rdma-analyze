@@ -1,0 +1,232 @@
+//! RDMA device enumeration and context.
+
+use std::ffi::CStr;
+use std::sync::Arc;
+
+use rdma_io_sys::ibverbs::*;
+use rdma_io_sys::wrapper::rdma_wrap____ibv_query_port;
+
+use crate::error::{from_ptr, from_ret};
+use crate::{Error, Result};
+
+/// A discovered RDMA device (not yet opened).
+///
+/// Obtained from [`devices()`]. The device list is freed when all `Device`
+/// values are dropped.
+#[derive(Debug)]
+pub struct Device {
+    list: Arc<DeviceList>,
+    index: usize,
+}
+
+/// Owns the `ibv_device**` list returned by `ibv_get_device_list`.
+#[derive(Debug)]
+struct DeviceList {
+    list: *mut *mut ibv_device,
+    #[allow(dead_code)]
+    count: usize,
+}
+
+// Safety: ibv_device pointers are process-wide and thread-safe.
+unsafe impl Send for DeviceList {}
+unsafe impl Sync for DeviceList {}
+
+impl Drop for DeviceList {
+    fn drop(&mut self) {
+        unsafe { ibv_free_device_list(self.list) };
+    }
+}
+
+/// Enumerate all RDMA devices on the system.
+///
+/// Returns an empty `Vec` if no devices are found. Use [`open_device`](Device::open)
+/// to obtain a [`Context`].
+pub fn devices() -> Result<Vec<Device>> {
+    let mut num_devices: i32 = 0;
+    let list = unsafe { ibv_get_device_list(&mut num_devices) };
+    if list.is_null() {
+        return Err(Error::Verbs(std::io::Error::last_os_error()));
+    }
+    let count = num_devices as usize;
+    let shared = Arc::new(DeviceList { list, count });
+    let devs = (0..count)
+        .map(|i| Device {
+            list: Arc::clone(&shared),
+            index: i,
+        })
+        .collect();
+    Ok(devs)
+}
+
+impl Device {
+    /// The kernel name of this device (e.g. `"siw0"`, `"mlx5_0"`).
+    pub fn name(&self) -> &str {
+        let dev = self.as_ptr();
+        let name = unsafe { ibv_get_device_name(dev) };
+        if name.is_null() {
+            "<unknown>"
+        } else {
+            unsafe { CStr::from_ptr(name) }
+                .to_str()
+                .unwrap_or("<invalid utf8>")
+        }
+    }
+
+    /// The node GUID of this device (network byte order).
+    pub fn guid(&self) -> u64 {
+        unsafe { ibv_get_device_guid(self.as_ptr()) }
+    }
+
+    /// The transport type of this device.
+    ///
+    /// Returns `IBV_TRANSPORT_IB` for InfiniBand/RoCE (rxe, mlx5, etc.)
+    /// or `IBV_TRANSPORT_IWARP` for iWARP (siw, cxgb4, etc.).
+    pub fn transport_type(&self) -> ibv_transport_type {
+        unsafe { (*self.as_ptr()).transport_type }
+    }
+
+    /// Returns `true` if this device uses the iWARP transport (e.g. siw).
+    pub fn is_iwarp(&self) -> bool {
+        self.transport_type() == IBV_TRANSPORT_IWARP
+    }
+
+    /// Open this device and return a [`Context`].
+    pub fn open(&self) -> Result<Context> {
+        let ctx = from_ptr(unsafe { ibv_open_device(self.as_ptr()) })?;
+        Ok(Context {
+            inner: ctx,
+            owned: true,
+        })
+    }
+
+    fn as_ptr(&self) -> *mut ibv_device {
+        unsafe { *self.list.list.add(self.index) }
+    }
+}
+
+/// An opened RDMA device context.
+///
+/// Wraps `ibv_context*`. Create via [`Device::open`].
+/// All child resources (PD, CQ, QP, …) hold an `Arc<Context>` to keep
+/// the context alive.
+pub struct Context {
+    pub(crate) inner: *mut ibv_context,
+    /// If false, we don't call ibv_close_device on drop (e.g. rdma_cm-owned).
+    owned: bool,
+}
+
+// Safety: ibv_context is thread-safe (protected by internal locking).
+unsafe impl Send for Context {}
+unsafe impl Sync for Context {}
+
+impl Drop for Context {
+    fn drop(&mut self) {
+        if self.owned {
+            let ret = unsafe { ibv_close_device(self.inner) };
+            if ret != 0 {
+                tracing::error!(
+                    "ibv_close_device failed: {}",
+                    std::io::Error::from_raw_os_error(-ret)
+                );
+            }
+        }
+    }
+}
+
+impl Context {
+    /// Wrap a raw `ibv_context` pointer.
+    ///
+    /// # Safety
+    /// The pointer must be valid. If `owned` is true, `ibv_close_device` will
+    /// be called on drop. Set `owned` to false for rdma_cm-managed contexts.
+    pub unsafe fn from_raw(ctx: *mut ibv_context, owned: bool) -> Self {
+        Self { inner: ctx, owned }
+    }
+
+    /// Query device attributes.
+    pub fn query_device(&self) -> Result<ibv_device_attr> {
+        let mut attr = ibv_device_attr::default();
+        from_ret(unsafe { ibv_query_device(self.inner, &mut attr) })?;
+        Ok(attr)
+    }
+
+    /// Query port attributes.
+    pub fn query_port(&self, port_num: u8) -> Result<ibv_port_attr> {
+        let mut attr = ibv_port_attr::default();
+        from_ret(unsafe { rdma_wrap____ibv_query_port(self.inner, port_num, &mut attr) })?;
+        Ok(attr)
+    }
+
+    /// Query a single GID entry by index.
+    pub fn query_gid(&self, port_num: u8, index: i32) -> Result<ibv_gid> {
+        let mut gid = ibv_gid::default();
+        from_ret(unsafe { ibv_query_gid(self.inner, port_num, index, &mut gid) })?;
+        Ok(gid)
+    }
+
+    /// Raw `ibv_context` pointer (for advanced/FFI use).
+    pub fn as_raw(&self) -> *mut ibv_context {
+        self.inner
+    }
+}
+
+/// Open the first available RDMA device.
+///
+/// Convenience function: equivalent to `devices()?.first().open()`.
+pub fn open_first_device() -> Result<Context> {
+    let devs = devices()?;
+    if devs.is_empty() {
+        return Err(Error::NoDevices);
+    }
+    devs[0].open()
+}
+
+/// Returns `true` if the first available RDMA device is iWARP (e.g. siw).
+///
+/// Useful for tests that need to skip features unsupported on iWARP
+/// (atomics, RDMA Write with Immediate Data, etc.).
+/// Returns `true` if **any** RDMA device is iWARP (e.g. siw).
+///
+/// Useful when binding to `0.0.0.0` where the CM may pick any device —
+/// a single iWARP device in the list means the connection could land on it.
+pub fn any_device_is_iwarp() -> bool {
+    devices()
+        .ok()
+        .map(|d| d.iter().any(|dev| dev.is_iwarp()))
+        .unwrap_or(false)
+}
+
+/// Returns `true` if the given protection domain's device supports Memory Window Type 2.
+///
+/// MW Type 2 allows per-connection scoped remote write access via
+/// `IBV_WR_BIND_MW` send WRs. Checks the device capability flags
+/// (`IBV_DEVICE_MEM_WINDOW_TYPE_2A` or `IBV_DEVICE_MEM_WINDOW_TYPE_2B`).
+///
+/// Takes a `&Arc<ProtectionDomain>` to query the correct device — the PD
+/// is bound to the connection's device context via `rdma_cm` routing.
+///
+/// **Note:** Some providers (older rxe kernels) may report the flag but fail
+/// on `ibv_alloc_mw`. The ring transport surfaces a clear error at connect
+/// time if alloc fails despite the flag.
+pub fn supports_mw_type2(pd: &Arc<crate::pd::ProtectionDomain>) -> bool {
+    let attr = match pd.context().query_device() {
+        Ok(attr) => attr,
+        Err(_) => return false,
+    };
+    let flags = attr.device_cap_flags;
+    flags
+        & (rdma_io_sys::ibverbs::IBV_DEVICE_MEM_WINDOW_TYPE_2A
+            | rdma_io_sys::ibverbs::IBV_DEVICE_MEM_WINDOW_TYPE_2B)
+        != 0
+}
+
+/// Open an RDMA device by name.
+pub fn open_device_by_name(name: &str) -> Result<Context> {
+    let devs = devices()?;
+    for d in &devs {
+        if d.name() == name {
+            return d.open();
+        }
+    }
+    Err(Error::DeviceNotFound(name.to_string()))
+}

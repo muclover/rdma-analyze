@@ -1,0 +1,17 @@
+# 历史路径
+rust-ffi-project/
+
+# Rust / C 构建产物
+**/target/
+**/*.rs.bk
+
+# 编辑器与本地
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+
+# 环境
+.env
+.env.*

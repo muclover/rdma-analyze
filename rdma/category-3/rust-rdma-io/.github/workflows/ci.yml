@@ -1,0 +1,233 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_TEST_THREADS: "1"
+  RUST_VERSION: "1.94.0"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libibverbs-dev \
+            librdmacm-dev \
+            rdma-core \
+            ibverbs-utils \
+            iproute2 \
+            cmake \
+            libclang-dev
+
+      - uses: taiki-e/install-action@protoc
+
+      - name: Install kernel extra modules and setup siw
+        run: |
+          KVER=$(uname -r)
+          echo "Kernel: $KVER"
+          sudo apt-get install -y "linux-modules-extra-${KVER}" || true
+          sudo ./scripts/setup-siw.sh
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "${{ env.RUST_VERSION }}"
+          components: clippy, rustfmt
+
+      # - uses: Swatinem/rust-cache@v2
+
+      - name: Configure (download bnd-linux.winmd)
+        run: cmake -B build
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Build
+        run: cargo build --all-targets
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --features tokio -- -D warnings
+
+      - name: Test
+        run: |
+          for i in $(seq 1 5); do
+            echo "=== Test run $i/5 ==="
+            cargo test -p rdma-io-tests -- --nocapture
+            sleep 3
+          done
+        timeout-minutes: 30
+
+      - name: Doc tests
+        run: cargo test --doc --workspace --features tokio
+
+  build-rxe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libibverbs-dev \
+            librdmacm-dev \
+            rdma-core \
+            ibverbs-utils \
+            iproute2 \
+            cmake \
+            libclang-dev \
+            linux-headers-$(uname -r)
+
+      - uses: taiki-e/install-action@protoc
+
+      - name: Configure and build rdma_rxe.ko
+        run: |
+          cmake -B build -DBUILD_RXE=ON
+          cmake --build build --target rxe --parallel
+
+      - name: Load rdma_rxe and create device
+        run: |
+          # Remove Mellanox VFs if present (avoids test device confusion)
+          sudo rmmod mlx5_ib 2>/dev/null || true
+          sudo ./scripts/setup-rxe.sh
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "${{ env.RUST_VERSION }}"
+
+      - name: Build
+        run: cargo build --all-targets
+
+      - name: Test
+        run: |
+          for i in $(seq 1 5); do
+            echo "=== Test run $i/5 ==="
+            cargo test -p rdma-io-tests -- --nocapture
+            sleep 3
+          done
+        timeout-minutes: 30
+
+  build-bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libibverbs-dev \
+            librdmacm-dev \
+            rdma-core \
+            cmake \
+            libclang-dev
+
+      - uses: taiki-e/install-action@protoc
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "${{ env.RUST_VERSION }}"
+
+      - name: Configure
+        run: cmake -B build
+
+      - name: Build bench release
+        run: cargo build -p rdma-io-bench --release
+
+      - name: Upload bench artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: bench-binaries
+          path: |
+            target/release/rdma-bench-server
+            target/release/rdma-bench-client
+          retention-days: 1
+
+  qemu-rdma-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install QEMU, libvirt, and Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-kvm libvirt-daemon-system \
+              libvirt-clients libvirt-dev virtinst qemu-utils ansible
+          sudo systemctl start libvirtd
+          sudo usermod -aG libvirt $USER
+
+      - uses: hashicorp/setup-terraform@v4
+
+      - name: Generate SSH key
+        run: ssh-keygen -t rsa -f ~/.ssh/id_rsa -N "" -q
+
+      - name: Deploy RDMA VMs
+        run: sg libvirt -c "./tests/infra-local/scripts/start-vm.sh --no-kvm -y"
+
+      - name: Wait for VMs to be ready
+        run: |
+          sg libvirt -c "./tests/infra-local/scripts/ssh-vm.sh 1 --wait=600"
+          sg libvirt -c "./tests/infra-local/scripts/ssh-vm.sh 2 --wait=600"
+
+      - name: Run E2E tests
+        run: sg libvirt -c "./tests/e2e/run_tests.sh"
+
+      - name: Wait for bench artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Waiting for bench-binaries artifact..."
+          for i in $(seq 1 120); do
+            ARTIFACTS=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts --jq '.artifacts[].name' 2>/dev/null || echo "")
+            if echo "$ARTIFACTS" | grep -q "bench-binaries"; then
+              echo "Artifact ready!"
+              exit 0
+            fi
+            BUILD_STATUS=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs --jq '.jobs[] | select(.name == "build-bench") | .conclusion' 2>/dev/null | head -1)
+            if [ "$BUILD_STATUS" = "failure" ] || [ "$BUILD_STATUS" = "cancelled" ]; then
+              echo "build-bench job failed!"
+              exit 1
+            fi
+            echo "  Attempt $i/120: waiting... (build-bench: ${BUILD_STATUS:-running})"
+            sleep 10
+          done
+          echo "Timeout waiting for artifact"
+          exit 1
+
+      - name: Download bench artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: bench-binaries
+          path: target/release/
+        timeout-minutes: 30
+
+      - name: Deploy bench to VMs
+        run: |
+          chmod +x target/release/rdma-bench-server target/release/rdma-bench-client
+          sg libvirt -c "./tests/e2e/run_tests.sh playbooks/deploy_bench.yml"
+
+      - name: Run benchmark (TLS)
+        run: sg libvirt -c "./tests/e2e/run_bench.sh --mode tls"
+
+      - name: Run H3 smoke test
+        run: sg libvirt -c "./tests/e2e/run_bench.sh --mode h3"
+
+      - name: Destroy VMs
+        if: always()
+        run: sg libvirt -c "./tests/infra-local/scripts/destroy-vm.sh -y"

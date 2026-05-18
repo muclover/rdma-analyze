@@ -1,0 +1,8 @@
+# Serialize test execution — siw (SoftIWarp) needs time between
+# connection tests to clean up kernel resources.
+[test]
+jobs = 1
+
+# Run test threads serially to avoid siw resource contention.
+[env]
+RUST_TEST_THREADS = "1"
