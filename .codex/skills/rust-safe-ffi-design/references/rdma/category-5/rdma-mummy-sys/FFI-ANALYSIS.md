@@ -313,7 +313,6 @@ CHANGELOG v0.2.0 记录引入 `_compat` 后缀（`confirmed`）。
 | `rdma/category-5/rdma-mummy-sys/scripts/run.sh` | SoftRoCE + examples 集成脚本 |
 | `rdma/category-5/rdma-mummy-sys/CHANGELOG.md` | `_compat`、`unwrap_unchecked`、link layer 等变更记录 |
 | `RDMA-Rust/rdma-core-mummy` `src/utility.h` | `RETURN_NOT_EXIST` → `errno = EOPNOTSUPP` |
-| `project-scope.md` | 单项目 12 章范围、静态分析、无跨项目对比 |
 
 ---
 
@@ -396,15 +395,3 @@ CHANGELOG v0.2.0 记录引入 `_compat` 后缀（`confirmed`）。
 - 是否计划像其它 RDMA-Rust crate 一样增加 **提交 bindgen 快照** 以支持 docs.rs 无 cmake 环境 — 当前 `build.rs` 未见 `docs.rs` 特殊分支。
 - `verbs.rs` TODO：`ibv_get_device_list` / `ibv_reg_mr` 等 C 侧 `__ibv_*` 重定义是否需在 Rust 再包一层。
 - **无 `links` 键** 对 Cargo 本地依赖解析/重复链接的影响 — 依赖方是否需自行声明 `links`。
-
----
-
-## 完成定义自检（project-scope §8）
-
-- [x] §0–§11 共 12 章均存在  
-- [x] 分析对象为 `rdma/category-5/rdma-mummy-sys/`（P10）  
-- [x] 静态阅读；未执行 `cargo build` / 硬件实测  
-- [x] 无跨项目对比  
-- [x] §10 架构决策推断含 C 头 / mummy / Rust 分层依据  
-- [x] Examples 简单阅读（client/server）  
-- [x] §9 证据索引 8–15 条量级  

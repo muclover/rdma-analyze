@@ -332,7 +332,6 @@ bindgen 对 union 的 `disable_untagged_union` + blocklist 与 README「nested s
 | `rdma/category-4/rdma-sys/scripts/run.sh` | SoftRoCE + test + examples |
 | `rdma/category-4/rdma-sys/.github/workflows/ci.yml` | Rust 1.61、apt、run.sh |
 | `rdma/category-4/rdma-sys/.gitmodules` | `rdma-env-setup` 子模块 |
-| `project-scope.md` | §7.1 纯 `-sys` 加强 §3/§6/§10；12 章结构 |
 
 ---
 

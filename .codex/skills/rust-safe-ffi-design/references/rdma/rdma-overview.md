@@ -9,13 +9,12 @@
 
 | 文档 | 内容 |
 |------|------|
-| [comparison/SCOPE.md](../comparison/SCOPE.md) | 对照范围与维度（已裁定） |
 | [comparison/general-c-ffi.md](../comparison/general-c-ffi.md) | **权威 P1–P11 总表**、模式归纳、例外/专题 |
 | 本文档 | P5–P11 补充深读；**五 Category 对照**（§0.7） |
 
 下文 §1 为 P5–P11 **列展开**；与 `general-c-ffi.md` §1 冲突时以 general-c-ffi 为准并应在本文件注明取舍。
 
-**分析完成（阶段 B）**：已按 [plan.md](../../plan.md) 与 [project-scope.md](../../project-scope.md) 对 RDMA 下 **7 个样本（P5–P11）** 完成静态 FFI 画像；单项目全文见 `docs/rdma/**/FFI-ANALYSIS.md`（索引：[README.md](./README.md)）。**未执行** `cargo build`；各单篇文档内不做跨项目技术对比。
+**分析完成**：已对 RDMA 下 **7 个样本（P5–P11）** 完成静态 FFI 画像；单项目全文见 `docs/rdma/**/FFI-ANALYSIS.md`（索引：[README.md](./README.md)）。**未执行** `cargo build`；各单篇文档内不做跨项目技术对比。
 
 ---
 
@@ -97,7 +96,7 @@ mummy + 现代 safe      P11（sideway → rdma-mummy-sys）
 
 | 项目 | 独有要点 | 证据 |
 |------|----------|------|
-| **P7** | 在 FFI 之上用 **`Transport` trait** 抽象 SendRecv / CreditRing / ReadRing，再挂 **tonic**（`RdmaConnector` / `RdmaIncoming`）与 **Quinn**（`RdmaUdpSocket`）；符合 project-scope §7.2「上层适配 crate」 | P7 `FFI-ANALYSIS.md` §4.3–§4.4 |
+| **P7** | 在 FFI 之上用 **`Transport` trait** 抽象 SendRecv / CreditRing / ReadRing，再挂 **tonic**（`RdmaConnector` / `RdmaIncoming`）与 **Quinn**（`RdmaUdpSocket`）；上层适配 crate 不新增 C 绑定 | P7 `FFI-ANALYSIS.md` §4.3–§4.4 |
 | **P9** | **不重复绑定**；用 **`Agent` + `CQEventListener`** 做 MR 元数据交换与高阶 `read` / `write` / `send` / `receive` API；许可证 **GPL-3.0** | P9 §4、§7 |
 | **P11** | 面向 **`ibv_wr_start` / `PostSendGuard`** 的类型状态封装；**trybuild** 约束「一 QP 一 guard」等不变量 | P11 §4.4、§8 |
 
@@ -331,7 +330,7 @@ RDMA 绑定的**首要难点**是 C 头中大量 **`static inline`** 与 **union
 |----|------|
 | P1–P4 与 RDMA 的横向对照 | 见 [comparison/general-c-ffi.md](../comparison/general-c-ffi.md) §1、§3–§5 |
 | 五 Category 对照 | 本文 §0.7 |
-| 性能、延迟、吞吐 | project-scope 非目标 |
+| 性能、延迟、吞吐 | 非目标 |
 | 各厂商 OFED / 驱动差异 | 未读上游驱动实现 |
 | `cargo build` / ABI 实测 | 阶段 A/B 裁定不构建 |
 | P9 与**本工作区** P8 源码差异 | P9 依赖 crates.io `rdma-sys`，未 vendored 对比符号级差异 |

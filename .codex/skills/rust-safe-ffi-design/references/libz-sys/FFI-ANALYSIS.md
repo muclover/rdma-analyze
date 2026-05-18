@@ -104,7 +104,7 @@ want_ng = (zlib-ng | zlib-ng-no-cmake-…) && !stock-zlib
 | stock zlib 1.3.2 | `src/zlib/*.c` | 系统库不可用或强制 static/Windows 等 |
 | zlib-ng | `src/zlib-ng/` | feature `zlib-ng`（cmake）或 `zlib-ng-no-cmake-…`（`zng/cc.rs`） |
 
-**未读** vendored `.c` 实现细节（符合 `project-scope.md` §4.5）。
+**未读** vendored `.c` 实现细节；本分析只关注 FFI 架构相关的头文件、构建脚本和 Rust 绑定。
 
 ### 2.5 构建依赖
 
@@ -359,15 +359,3 @@ CI 矩阵：Windows / macOS / Linux musl&gnu、stable/beta/nightly、`minimal-ve
 | 2 | 未绑定 API（`deflatePending` 等）是否有意永久省略，或计划按 zlib 版本补全 |
 | 3 | `libz-ng-sys` 的 `systest` 是否使用 `systest/Cargo-zng.toml` 及与主 `systest` 的差异（未读 `Cargo-zng.toml` 全文） |
 | 4 | 在「系统 libz + 内嵌头文件版本不一致」边缘场景下，ctypes 测试与运行时行为假设（仅静态阅读无法验证） |
-
----
-
-## 完成定义自检（project-scope §8）
-
-- [x] §0–§11 共 12 章
-- [x] §0 可独立说明定位
-- [x] §10 ≥ 3 条架构决策推断
-- [x] §9 约 8–15 条证据
-- [x] §8 examples 简单阅读结论
-- [x] 无跨项目对比
-- [x] 未声称执行构建验证

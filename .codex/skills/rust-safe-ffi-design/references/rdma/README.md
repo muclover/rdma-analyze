@@ -1,45 +1,29 @@
-# RDMA 样本项目分析索引
+# RDMA Reference Router
 
-> 总计划：[plan.md](../../plan.md) · 范围：[project-scope.md](../../project-scope.md)  
-> 本目录索引各项目 `FFI-ANALYSIS.md` 与 RDMA 横向总览；单篇分析内不做跨项目对比。
+本目录只在目标库属于 RDMA / verbs / rdma-core，或遇到类似的 `ops` 表、`static inline`、硬件依赖 CI 问题时读取。普通 C 库不要进入本目录。
 
-## 横向对照（P5–P11）
+优先读取 [rdma-overview.md](./rdma-overview.md)，只有需要具体样本细节时再选读单篇 `FFI-ANALYSIS.md`。
 
-| 文档 | 说明 |
-|------|------|
-| [rdma-overview.md](./rdma-overview.md) | P5–P11 补充对照；**五 Category 对照**（§0.7） |
-| [comparison/general-c-ffi.md](../comparison/general-c-ffi.md) | **权威** P1–P11 总表与架构决策向模式归纳 |
+## 读取顺序
 
-阶段 C 范围见 [comparison/SCOPE.md](../comparison/SCOPE.md)（已裁定）。
+1. [rdma-overview.md](./rdma-overview.md) — RDMA 横向结论、五类路线、wrapper/mummy/soft RDMA 取舍。
+2. 下表中最接近目标库的一到两篇样本。
+3. 若仍无法决策，再回到 [../comparison/general-c-ffi.md](../comparison/general-c-ffi.md) 做横向核对。
 
-## Category 1 — ibverbs 入门
+## 样本路由
 
-| 序号 | 源码 | 分析文档 |
-|------|------|----------|
-| P5 | `rdma/category-1/rust-ibverbs/` | [rust-ibverbs/FFI-ANALYSIS.md](./category-1/rust-ibverbs/FFI-ANALYSIS.md) |
+| 目标画像 | 选读样本 |
+|----------|----------|
+| 经典 `ibverbs-sys` + safe 双 crate，目标是最小可用 verbs safe API | [category-1/rust-ibverbs/FFI-ANALYSIS.md](./category-1/rust-ibverbs/FFI-ANALYSIS.md) |
+| 单 crate 内嵌 bindings + examples，偏实验或内部使用 | [category-2/rdma/FFI-ANALYSIS.md](./category-2/rdma/FFI-ANALYSIS.md) |
+| 大型 workspace，safe I/O 层之上还有 tonic/quinn 等传输适配 | [category-3/rust-rdma-io/FFI-ANALYSIS.md](./category-3/rust-rdma-io/FFI-ANALYSIS.md) |
+| 只做裸 `-sys`，需要处理 verbs 类型、blocklist、pkg-config | [category-4/rdma-sys/FFI-ANALYSIS.md](./category-4/rdma-sys/FFI-ANALYSIS.md) |
+| 复用外部 `-sys`，自身定位为 async 框架 | [category-4/async-rdma/FFI-ANALYSIS.md](./category-4/async-rdma/FFI-ANALYSIS.md) |
+| CI 编译期不希望依赖 `libibverbs-dev`，考虑 mummy 静态导出 | [category-5/rdma-mummy-sys/FFI-ANALYSIS.md](./category-5/rdma-mummy-sys/FFI-ANALYSIS.md) |
+| safe 层依赖 mummy sys，并强调类型状态或 Extended Verbs | [category-5/sideway/FFI-ANALYSIS.md](./category-5/sideway/FFI-ANALYSIS.md) |
 
-## Category 2 — 单仓低层 API + examples
+## 交付物注意
 
-| 序号 | 源码 | 分析文档 |
-|------|------|----------|
-| P6 | `rdma/category-2/rdma/` | [rdma/FFI-ANALYSIS.md](./category-2/rdma/FFI-ANALYSIS.md) |
-
-## Category 3 — 大型 workspace + 上层传输适配
-
-| 序号 | 源码 | 分析文档 |
-|------|------|----------|
-| P7 | `rdma/category-3/rust-rdma-io/` | [rust-rdma-io/FFI-ANALYSIS.md](./category-3/rust-rdma-io/FFI-ANALYSIS.md) |
-
-## Category 4 — `-sys` 与 async 框架
-
-| 序号 | 源码 | 分析文档 |
-|------|------|----------|
-| P8 | `rdma/category-4/rdma-sys/` | [rdma-sys/FFI-ANALYSIS.md](./category-4/rdma-sys/FFI-ANALYSIS.md) |
-| P9 | `rdma/category-4/async-rdma/` | [async-rdma/FFI-ANALYSIS.md](./category-4/async-rdma/FFI-ANALYSIS.md) |
-
-## Category 5 — mummy 绑定与另一 safe 路线
-
-| 序号 | 源码 | 分析文档 |
-|------|------|----------|
-| P10 | `rdma/category-5/rdma-mummy-sys/` | [rdma-mummy-sys/FFI-ANALYSIS.md](./category-5/rdma-mummy-sys/FFI-ANALYSIS.md) |
-| P11 | `rdma/category-5/sideway/` | [sideway/FFI-ANALYSIS.md](./category-5/sideway/FFI-ANALYSIS.md) |
+- 在用户交付物中写结论，不写样本编号或本目录路径。
+- 若目标库不是 RDMA，但有类似 inline/ops 问题，只借鉴 wrapper/mummy/手写替代路线，不引入 RDMA 业务术语。
+- RDMA 样本普遍涉及硬件或软 RDMA 环境；设计 `CHECKLIST.md` 时要区分 compile-only、ABI check、soft-device integration 和真实硬件测试。

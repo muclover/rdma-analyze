@@ -351,7 +351,6 @@ QP/CQ 持有 **`Arc<DeviceContext>`** 或 **`Arc<ProtectionDomain>`** 与对端 
 | `rdma/category-5/sideway/examples/*.rs` | 示例清单 |
 | `rdma/category-5/sideway/Justfile` | 测试与覆盖率命令 |
 | `rdma/category-5/sideway/.github/workflows/test.yml` | CI 步骤 |
-| `project-scope.md` | 单项目分析范围、静态分析、12 章节约束 |
 
 ---
 

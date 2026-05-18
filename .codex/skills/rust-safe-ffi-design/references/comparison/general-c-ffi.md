@@ -1,16 +1,15 @@
 # Rust FFI 样本横向对照（P1–P11）
 
 > **文档性质**：阶段 C **权威**横向对照（全样本）。  
-> **范围**：[SCOPE.md](./SCOPE.md) 裁定 — P1–P11，同一类 C / `extern "C"` FFI 样本。  
+> **范围**：P1–P11，同一类 C / `extern "C"` FFI 样本。  
 > **依据**：`docs/**/FFI-ANALYSIS.md`（静态阅读，未构建验证）。  
 > **证据深度**：索引级（`→ Pn §x`）。  
-> **非目标**：规范性「应做/不应做」、性能排名；见 [SCOPE.md](./SCOPE.md) §1。
+> **非目标**：规范性「应做/不应做」、性能排名。
 
 **交叉链接**
 
 | 文档 | 内容 |
 |------|------|
-| [SCOPE.md](./SCOPE.md) | 范围、维度、完成定义 |
 | [rdma-overview.md](../rdma/rdma-overview.md) | P5–P11 补充深读；**五 Category 对照** |
 | 单项目 | `docs/**/FFI-ANALYSIS.md` |
 
@@ -44,7 +43,7 @@
 
 ## 1. 对照总表
 
-行 = 项目；列 = D01–D17（定义见 [SCOPE.md](./SCOPE.md) §4.5）。单元格：**短结论** + `→ §章节`。
+行 = 项目；列 = D01–D17。单元格：**短结论** + `→ §章节`。
 
 ### 1.1 核心维度（D01–D09）
 
@@ -288,7 +287,7 @@
 |----|------|
 | P5–P11 Category 级对照细表 | 见 [rdma-overview.md](../rdma/rdma-overview.md) §0.7 |
 | P9 与**本工作区 P8** 符号级差异 | P9 用 crates.io `rdma-sys`，未 vendored 对比 |
-| 性能、延迟、厂商 OFED | project-scope / SCOPE 非目标 |
+| 性能、延迟、厂商 OFED | 非目标 |
 | `cargo build` / ABI 实测 | 阶段 A/B 裁定不构建 |
 | 规范性最佳实践条文 | 阶段 D `docs/guide/` |
 
