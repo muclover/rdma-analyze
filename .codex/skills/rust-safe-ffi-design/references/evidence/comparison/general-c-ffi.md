@@ -27,10 +27,10 @@
 
 | P | 路径 | 单项目分析 |
 |---|------|------------|
-| P1 | `libz-sys/` | [FFI-ANALYSIS.md](../libz-sys/FFI-ANALYSIS.md) |
-| P2 | `curl-rust/` | [FFI-ANALYSIS.md](../curl-rust/FFI-ANALYSIS.md) |
-| P3 | `rust-openssl/` | [FFI-ANALYSIS.md](../rust-openssl/FFI-ANALYSIS.md) |
-| P4 | `zstd-rs/` | [FFI-ANALYSIS.md](../zstd-rs/FFI-ANALYSIS.md) |
+| P1 | `cases/libz-sys.md` | [libz-sys.md](../cases/libz-sys.md) |
+| P2 | `cases/curl-rust.md` | [curl-rust.md](../cases/curl-rust.md) |
+| P3 | `cases/rust-openssl.md` | [rust-openssl.md](../cases/rust-openssl.md) |
+| P4 | `cases/zstd-rs.md` | [zstd-rs.md](../cases/zstd-rs.md) |
 | P5 | `rdma/category-1/rust-ibverbs/` | [FFI-ANALYSIS.md](../rdma/category-1/rust-ibverbs/FFI-ANALYSIS.md) |
 | P6 | `rdma/category-2/rdma/` | [FFI-ANALYSIS.md](../rdma/category-2/rdma/FFI-ANALYSIS.md) |
 | P7 | `rdma/category-3/rust-rdma-io/` | [FFI-ANALYSIS.md](../rdma/category-3/rust-rdma-io/FFI-ANALYSIS.md) |
@@ -157,7 +157,7 @@
 
 ## 3. 模式归纳（架构决策向）
 
-供 [architecture-decisions.md](../guide/architecture-decisions.md) 引用的**选项分类**（非规范性推荐）。
+供 [decision-rules.md](../../core/decision-rules.md) 背景核对的**选项分类**（非规范性推荐）。
 
 | 模式 ID | 决策问题（简） | 描述 | 代表项目 | 索引 |
 |---------|----------------|------|----------|------|
@@ -255,7 +255,7 @@
 
 ### T3 — 链接：`links` / pkg-config / vendored / mummy
 
-见 §1.1 D05 与 §2 D05；决策树素材 → 阶段 D `architecture-decisions.md`。
+见 §1.1 D05 与 §2 D05；该段是 `core/decision-rules.md` 的背景素材。
 
 ### T4 — async 集成
 
