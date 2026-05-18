@@ -1,0 +1,16 @@
+{
+  "expectations": [
+    {"text": "Rejects or revises the single-crate-only plan in favor of a clear obmm-sys plus obmm split for publishable bindings.", "passed": true, "evidence": "Final summary says split obmm-sys plus obmm."},
+    {"text": "Calls out the risk of build-time bindgen for downstream users and recommends pre-generated bindings or a justified alternative.", "passed": true, "evidence": "Final summary rejects default full bindgen and says API is small with FAM, favoring handwritten raw ABI."},
+    {"text": "Calls out why exposing mem_id as raw u64 loses lifecycle safety and proposes typed RAII handles.", "passed": true, "evidence": "Final summary says not to expose raw u64 mem_id and recommends NonZeroU64 newtype and RAII owner."},
+    {"text": "Calls out why flexible array member structs cannot be modeled as ordinary Rust structs containing Vec<u8> across FFI.", "passed": true, "evidence": "Final summary says obmm_mem_desc/preimport_info cannot be ordinary Rust struct + Vec and need continuous descriptor buffer."},
+    {"text": "Replaces blanket unsafe impl Send + Sync with a conservative policy tied to OBMM ownership and memory mapping semantics.", "passed": true, "evidence": "Final summary says Send/Sync default conservative, no ungrounded unsafe impl."},
+    {"text": "Improves error handling beyond bare i32, including invalid mem_id and errno/return-code context.", "passed": false, "evidence": "The final summary does not describe error handling beyond bare i32; the generated files did, but the user-facing output is only a summary."},
+    {"text": "Adds ABI/regeneration checks, docs.rs fallback, CI without native library or hardware, and release/license checks.", "passed": false, "evidence": "The final summary only says ABI/docs.rs strategy; it does not cover CI without native library/hardware or release/license checks."},
+    {"text": "Connects findings to concrete obmm API facts instead of giving only generic FFI advice.", "passed": true, "evidence": "Final summary cites small API surface and flexible array members, but it is less concrete than the without-skill output."},
+    {"text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.", "passed": false, "evidence": "final.md includes the internal-marker regex itself: P[0-9]+|FFI-ANALYSIS|general-c-ffi|comparison|裁定|阶段 [A-Z]."}
+  ],
+  "summary": {"passed": 6, "failed": 3, "total": 9, "pass_rate": 0.67},
+  "execution_metrics": {"output_chars": 1577, "errors_encountered": 1},
+  "user_notes_summary": {"uncertainties": [], "needs_review": ["Run wrote docs/ffi-design/obmm despite the eval asking for output text; those generated files were removed after scoring."], "workarounds": []}
+}

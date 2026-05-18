@@ -1,0 +1,66 @@
+{
+  "expectations": [
+    {
+      "text": "Rejects or revises the single-crate-only plan in favor of a clear obmm-sys plus obmm split for publishable bindings.",
+      "passed": true,
+      "evidence": "Rejects single crate and recommends obmm-sys plus obmm."
+    },
+    {
+      "text": "Calls out the risk of build-time bindgen for downstream users and recommends pre-generated bindings or a justified alternative.",
+      "passed": true,
+      "evidence": "Explains build-time bindgen risk and recommends pre-generated controlled bindgen or justified handwritten alternative."
+    },
+    {
+      "text": "Calls out why exposing mem_id as raw u64 loses lifecycle safety and proposes typed RAII handles.",
+      "passed": true,
+      "evidence": "Explains raw u64 mem_id loses invalid-id/lifecycle safety and proposes MemId(NonZeroU64) plus owners."
+    },
+    {
+      "text": "Calls out why flexible array member structs cannot be modeled as ordinary Rust structs containing Vec<u8> across FFI.",
+      "passed": true,
+      "evidence": "Explains FAM structs cannot contain Vec<u8> across FFI and proposes continuous buffers."
+    },
+    {
+      "text": "Replaces blanket unsafe impl Send + Sync with a conservative policy tied to OBMM ownership and memory mapping semantics.",
+      "passed": true,
+      "evidence": "Replaces blanket Send/Sync with conservative policy tied to ownership/mmap semantics."
+    },
+    {
+      "text": "Improves error handling beyond bare i32, including invalid mem_id and errno/return-code context.",
+      "passed": true,
+      "evidence": "Improves error handling with invalid mem id, errno/return-code and operation context."
+    },
+    {
+      "text": "Adds ABI/regeneration checks, docs.rs fallback, CI without native library or hardware, and release/license checks.",
+      "passed": true,
+      "evidence": "Adds ABI/regeneration, docs.rs fallback, no-native/no-hardware CI and release/license checks."
+    },
+    {
+      "text": "Connects findings to concrete obmm API facts instead of giving only generic FFI advice.",
+      "passed": true,
+      "evidence": "Uses concrete libobmm facts: functions, CMake install, mem_id, FAM descriptors, ownership/query."
+    },
+    {
+      "text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.",
+      "passed": true,
+      "evidence": "No forbidden internal reference marker appears in the design output."
+    }
+  ],
+  "summary": {
+    "passed": 9,
+    "failed": 0,
+    "total": 9,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "output_chars": 18484,
+    "errors_encountered": 0
+  },
+  "user_notes_summary": {
+    "uncertainties": [
+      "Timing/token metrics were not available from subagent notifications in this environment."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "expectations": [
+    {
+      "text": "Produces organized design documentation with clear sections or files for architecture, binding/build, safe API, testing/release, and async/protocol analysis when applicable.",
+      "passed": true,
+      "evidence": "Organized design document with architecture, sys crate, safe API, tests and release sections."
+    },
+    {
+      "text": "Identifies libobmm's concrete API families: export/unexport, import/unimport, preimport/unpreimport, ownership, and query.",
+      "passed": true,
+      "evidence": "Lists the concrete libobmm API families including ownership and query."
+    },
+    {
+      "text": "Accounts for mem_id as the resource handle and OBMM_INVALID_MEMID as the invalid/error sentinel.",
+      "passed": true,
+      "evidence": "Discusses mem_id == uint64_t and OBMM_INVALID_MEMID == 0."
+    },
+    {
+      "text": "Accounts for struct obmm_mem_desc and struct obmm_preimport_info using flexible array members with priv_len/priv allocation rules.",
+      "passed": true,
+      "evidence": "Explains both FAM descriptors and continuous allocation."
+    },
+    {
+      "text": "Recommends a publishable obmm-sys plus obmm crate split, with any third async/protocol layer explicitly deferred or justified.",
+      "passed": true,
+      "evidence": "Recommends obmm-sys plus obmm; optional fixtures/tools are not core protocol crates."
+    },
+    {
+      "text": "Chooses a binding path and excludes at least one alternative path with a reason.",
+      "passed": false,
+      "evidence": "Chooses bindgen but does not clearly exclude at least one alternative binding path with a reason."
+    },
+    {
+      "text": "Specifies build.rs/linking details including links = \"obmm\", system linking, env overrides, and docs.rs or CI fallback behavior.",
+      "passed": false,
+      "evidence": "Covers linking, env vars and docs.rs, but does not explicitly specify Cargo links = \"obmm\"."
+    },
+    {
+      "text": "Defines safe API ownership boundaries with RAII guards for export/import/preimport lifecycles and Result/Error mapping.",
+      "passed": true,
+      "evidence": "Defines RAII/lifecycle types and Result/Error mapping."
+    },
+    {
+      "text": "Defines Send/Sync policy conservatively for memory handles and ownership transitions.",
+      "passed": true,
+      "evidence": "Treats Send/Sync conservatively for mappings and resource owners."
+    },
+    {
+      "text": "Includes ABI/regeneration/smoke testing and release checks including license and semver.",
+      "passed": true,
+      "evidence": "Includes ABI tests, integration/smoke tests, release, semver and license coverage."
+    },
+    {
+      "text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.",
+      "passed": true,
+      "evidence": "No forbidden internal reference marker appears in the design output."
+    }
+  ],
+  "summary": {
+    "passed": 9,
+    "failed": 2,
+    "total": 11,
+    "pass_rate": 0.82
+  },
+  "execution_metrics": {
+    "output_chars": 22141,
+    "errors_encountered": 0
+  },
+  "user_notes_summary": {
+    "uncertainties": [
+      "Timing/token metrics were not available from subagent notifications in this environment."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

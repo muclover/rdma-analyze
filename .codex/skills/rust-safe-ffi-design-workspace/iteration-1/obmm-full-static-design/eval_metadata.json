@@ -1,0 +1,18 @@
+{
+  "eval_id": 1,
+  "eval_name": "obmm-full-static-design",
+  "prompt": "为当前仓库的 obmm/src/libobmm 设计一套可发布的 Rust FFI 架构。允许静态阅读头文件、CMake 和 obmm/doc 中必要文档；不要编译 C 项目，不要安装依赖，不要实现代码。请输出设计方案正文。",
+  "assertions": [
+    "Names the fixed six deliverables README.md, ARCHITECTURE.md, BINDING.md, SAFE-API.md, CHECKLIST.md, and ASYNC-ANALYZE.md.",
+    "Identifies libobmm's concrete API families: export/unexport, import/unimport, preimport/unpreimport, ownership, and query.",
+    "Accounts for mem_id as the resource handle and OBMM_INVALID_MEMID as the invalid/error sentinel.",
+    "Accounts for struct obmm_mem_desc and struct obmm_preimport_info using flexible array members with priv_len/priv allocation rules.",
+    "Recommends a publishable obmm-sys plus obmm crate split, with any third async/protocol layer explicitly deferred or justified.",
+    "Chooses a binding path and excludes at least one alternative path with a reason.",
+    "Specifies build.rs/linking details including links = \"obmm\", system linking, env overrides, and docs.rs or CI fallback behavior.",
+    "Defines safe API ownership boundaries with RAII guards for export/import/preimport lifecycles and Result/Error mapping.",
+    "Defines Send/Sync policy conservatively for memory handles and ownership transitions.",
+    "Includes ABI/regeneration/smoke testing and release checks including license and semver.",
+    "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D."
+  ]
+}

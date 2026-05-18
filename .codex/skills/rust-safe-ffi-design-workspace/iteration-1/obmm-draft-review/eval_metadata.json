@@ -1,0 +1,16 @@
+{
+  "eval_id": 3,
+  "eval_name": "obmm-draft-review",
+  "prompt": "审查下面这份 obmm Rust FFI 草案，并给出设计级修订方案。可以静态阅读 obmm/src/libobmm/libobmm.h、CMakeLists.txt 和 obmm/doc/libobmm.md；不要编译或实现代码。草案：只做一个 obmm crate，不拆 obmm-sys；build.rs 直接链接 -lobmm；用 bindgen 在用户构建时生成全部绑定；safe 层把 mem_id 暴露为 u64，导出和引入函数直接返回 u64；struct obmm_mem_desc 用普通 Rust struct 表示并包含 Vec<u8> priv；所有 handle 都 unsafe impl Send + Sync；错误只用 i32；暂时不做 ABI 检查和 docs.rs 降级。",
+  "assertions": [
+    "Rejects or revises the single-crate-only plan in favor of a clear obmm-sys plus obmm split for publishable bindings.",
+    "Calls out the risk of build-time bindgen for downstream users and recommends pre-generated bindings or a justified alternative.",
+    "Calls out why exposing mem_id as raw u64 loses lifecycle safety and proposes typed RAII handles.",
+    "Calls out why flexible array member structs cannot be modeled as ordinary Rust structs containing Vec<u8> across FFI.",
+    "Replaces blanket unsafe impl Send + Sync with a conservative policy tied to OBMM ownership and memory mapping semantics.",
+    "Improves error handling beyond bare i32, including invalid mem_id and errno/return-code context.",
+    "Adds ABI/regeneration checks, docs.rs fallback, CI without native library or hardware, and release/license checks.",
+    "Connects findings to concrete obmm API facts instead of giving only generic FFI advice.",
+    "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D."
+  ]
+}

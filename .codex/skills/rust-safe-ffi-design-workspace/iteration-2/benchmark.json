@@ -1,0 +1,457 @@
+{
+  "metadata": {
+    "skill_name": "rust-safe-ffi-design",
+    "skill_path": "/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/.codex/skills/rust-safe-ffi-design",
+    "executor_model": "subagents inherited current model",
+    "timestamp": "2026-05-19T00:00:00+08:00",
+    "evals_run": [
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "obmm-full-static-design",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 11,
+        "failed": 0,
+        "total": 11,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Produces organized design documentation with clear sections or files for architecture, binding/build, safe API, testing/release, and async/protocol analysis when applicable.",
+          "passed": true,
+          "evidence": "Organized as README/ARCHITECTURE/BINDING/SAFE-API/CHECKLIST/ASYNC sections."
+        },
+        {
+          "text": "Identifies libobmm's concrete API families: export/unexport, import/unimport, preimport/unpreimport, ownership, and query.",
+          "passed": true,
+          "evidence": "Lists export/unexport, import/unimport, preimport/unpreimport, ownership and query API families."
+        },
+        {
+          "text": "Accounts for mem_id as the resource handle and OBMM_INVALID_MEMID as the invalid/error sentinel.",
+          "passed": true,
+          "evidence": "Identifies typedef uint64_t mem_id and OBMM_INVALID_MEMID == 0."
+        },
+        {
+          "text": "Accounts for struct obmm_mem_desc and struct obmm_preimport_info using flexible array members with priv_len/priv allocation rules.",
+          "passed": true,
+          "evidence": "Covers obmm_mem_desc and obmm_preimport_info FAM priv[] handling."
+        },
+        {
+          "text": "Recommends a publishable obmm-sys plus obmm crate split, with any third async/protocol layer explicitly deferred or justified.",
+          "passed": true,
+          "evidence": "Chooses obmm-sys plus obmm and defers protocol/async layers."
+        },
+        {
+          "text": "Chooses a binding path and excludes at least one alternative path with a reason.",
+          "passed": true,
+          "evidence": "Chooses handwritten extern + ABI/layout checks and excludes build-time bindgen, wrapper.c and mummy."
+        },
+        {
+          "text": "Specifies build.rs/linking details including links = \"obmm\", system linking, env overrides, and docs.rs or CI fallback behavior.",
+          "passed": true,
+          "evidence": "Includes links = \"obmm\", dynamic system linking, env overrides and docs.rs/CI fallback."
+        },
+        {
+          "text": "Defines safe API ownership boundaries with RAII guards for export/import/preimport lifecycles and Result/Error mapping.",
+          "passed": true,
+          "evidence": "Defines RAII owners for export/import/preimport and Result/Error mapping."
+        },
+        {
+          "text": "Defines Send/Sync policy conservatively for memory handles and ownership transitions.",
+          "passed": true,
+          "evidence": "Uses conservative Send/Sync policy for owners and mappings."
+        },
+        {
+          "text": "Includes ABI/regeneration/smoke testing and release checks including license and semver.",
+          "passed": true,
+          "evidence": "Includes ABI/layout, binding diff, CI/smoke, license and semver/release coverage."
+        },
+        {
+          "text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.",
+          "passed": true,
+          "evidence": "No forbidden internal reference marker appears in the design output."
+        }
+      ]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "obmm-full-static-design",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.82,
+        "passed": 9,
+        "failed": 2,
+        "total": 11,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Produces organized design documentation with clear sections or files for architecture, binding/build, safe API, testing/release, and async/protocol analysis when applicable.",
+          "passed": true,
+          "evidence": "Organized design document with architecture, sys crate, safe API, tests and release sections."
+        },
+        {
+          "text": "Identifies libobmm's concrete API families: export/unexport, import/unimport, preimport/unpreimport, ownership, and query.",
+          "passed": true,
+          "evidence": "Lists the concrete libobmm API families including ownership and query."
+        },
+        {
+          "text": "Accounts for mem_id as the resource handle and OBMM_INVALID_MEMID as the invalid/error sentinel.",
+          "passed": true,
+          "evidence": "Discusses mem_id == uint64_t and OBMM_INVALID_MEMID == 0."
+        },
+        {
+          "text": "Accounts for struct obmm_mem_desc and struct obmm_preimport_info using flexible array members with priv_len/priv allocation rules.",
+          "passed": true,
+          "evidence": "Explains both FAM descriptors and continuous allocation."
+        },
+        {
+          "text": "Recommends a publishable obmm-sys plus obmm crate split, with any third async/protocol layer explicitly deferred or justified.",
+          "passed": true,
+          "evidence": "Recommends obmm-sys plus obmm; optional fixtures/tools are not core protocol crates."
+        },
+        {
+          "text": "Chooses a binding path and excludes at least one alternative path with a reason.",
+          "passed": false,
+          "evidence": "Chooses bindgen but does not clearly exclude at least one alternative binding path with a reason."
+        },
+        {
+          "text": "Specifies build.rs/linking details including links = \"obmm\", system linking, env overrides, and docs.rs or CI fallback behavior.",
+          "passed": false,
+          "evidence": "Covers linking, env vars and docs.rs, but does not explicitly specify Cargo links = \"obmm\"."
+        },
+        {
+          "text": "Defines safe API ownership boundaries with RAII guards for export/import/preimport lifecycles and Result/Error mapping.",
+          "passed": true,
+          "evidence": "Defines RAII/lifecycle types and Result/Error mapping."
+        },
+        {
+          "text": "Defines Send/Sync policy conservatively for memory handles and ownership transitions.",
+          "passed": true,
+          "evidence": "Treats Send/Sync conservatively for mappings and resource owners."
+        },
+        {
+          "text": "Includes ABI/regeneration/smoke testing and release checks including license and semver.",
+          "passed": true,
+          "evidence": "Includes ABI tests, integration/smoke tests, release, semver and license coverage."
+        },
+        {
+          "text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.",
+          "passed": true,
+          "evidence": "No forbidden internal reference marker appears in the design output."
+        }
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "obmm-no-scan-constraint",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Respects the no-scan constraint and does not claim concrete obmm API facts beyond the name obmm.",
+          "passed": true,
+          "evidence": "States it did not explore/read obmm sources and marks facts Unknown."
+        },
+        {
+          "text": "Produces organized design documentation with clear sections or files for architecture, binding/build, safe API, testing/release, and async/protocol analysis when applicable.",
+          "passed": true,
+          "evidence": "Organized into architecture, binding, safe API, async and checklist sections."
+        },
+        {
+          "text": "Uses Unknown or unresolved items for C API shape, resource model, errors, threading, build metadata, and license.",
+          "passed": true,
+          "evidence": "Uses Unknown for API shape, resources, errors, threading, build model and license."
+        },
+        {
+          "text": "Provides a conservative obmm-sys plus obmm default while explaining what evidence could change the decision.",
+          "passed": true,
+          "evidence": "Defaults to obmm-sys plus obmm and explains evidence that could change decisions."
+        },
+        {
+          "text": "Makes binding strategy explicit and names excluded alternatives.",
+          "passed": true,
+          "evidence": "Explicitly chooses pre-generated bindgen as a provisional path and excludes build-time bindgen, pure handwritten and wrapper.c defaults."
+        },
+        {
+          "text": "Covers build.rs/linking, docs.rs/CI fallback, safe wrappers, Error/Result, unsafe boundaries, Send/Sync, tests, and release checks.",
+          "passed": true,
+          "evidence": "Covers linking, docs.rs/CI fallback, safe wrappers, Error/Result, unsafe boundaries, Send/Sync, tests and release."
+        },
+        {
+          "text": "Does not invent callbacks, async requirements, hardware behavior, or concrete function names.",
+          "passed": true,
+          "evidence": "Does not claim concrete obmm function names; examples are clearly placeholder patterns/prefixes."
+        },
+        {
+          "text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.",
+          "passed": true,
+          "evidence": "No forbidden internal reference marker appears in the design output."
+        }
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "obmm-no-scan-constraint",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.62,
+        "passed": 5,
+        "failed": 3,
+        "total": 8,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Respects the no-scan constraint and does not claim concrete obmm API facts beyond the name obmm.",
+          "passed": true,
+          "evidence": "States the no-scan constraint and does not read headers/docs."
+        },
+        {
+          "text": "Produces organized design documentation with clear sections or files for architecture, binding/build, safe API, testing/release, and async/protocol analysis when applicable.",
+          "passed": true,
+          "evidence": "Organized design sections cover sys crate, safe API, error, async/callback and tests."
+        },
+        {
+          "text": "Uses Unknown or unresolved items for C API shape, resource model, errors, threading, build metadata, and license.",
+          "passed": true,
+          "evidence": "Lists broad Unknown items for API, ABI, resources, errors, threading, build and license."
+        },
+        {
+          "text": "Provides a conservative obmm-sys plus obmm default while explaining what evidence could change the decision.",
+          "passed": true,
+          "evidence": "Recommends obmm-sys plus obmm and says headers must confirm details."
+        },
+        {
+          "text": "Makes binding strategy explicit and names excluded alternatives.",
+          "passed": false,
+          "evidence": "Does not explicitly name excluded binding strategies."
+        },
+        {
+          "text": "Covers build.rs/linking, docs.rs/CI fallback, safe wrappers, Error/Result, unsafe boundaries, Send/Sync, tests, and release checks.",
+          "passed": false,
+          "evidence": "Covers basic build.rs/safe/Error/tests but misses docs.rs/CI fallback and release checks."
+        },
+        {
+          "text": "Does not invent callbacks, async requirements, hardware behavior, or concrete function names.",
+          "passed": false,
+          "evidence": "Introduces concrete placeholder type obmm_handle/Obmm in a no-scan design; this is weaker than keeping all C API names unknown."
+        },
+        {
+          "text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.",
+          "passed": true,
+          "evidence": "No forbidden internal reference marker appears in the design output."
+        }
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "obmm-draft-review",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 9,
+        "failed": 0,
+        "total": 9,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Rejects or revises the single-crate-only plan in favor of a clear obmm-sys plus obmm split for publishable bindings.",
+          "passed": true,
+          "evidence": "Rejects single crate and recommends obmm-sys plus obmm."
+        },
+        {
+          "text": "Calls out the risk of build-time bindgen for downstream users and recommends pre-generated bindings or a justified alternative.",
+          "passed": true,
+          "evidence": "Explains build-time bindgen risk and recommends pre-generated controlled bindgen or justified handwritten alternative."
+        },
+        {
+          "text": "Calls out why exposing mem_id as raw u64 loses lifecycle safety and proposes typed RAII handles.",
+          "passed": true,
+          "evidence": "Explains raw u64 mem_id loses invalid-id/lifecycle safety and proposes MemId(NonZeroU64) plus owners."
+        },
+        {
+          "text": "Calls out why flexible array member structs cannot be modeled as ordinary Rust structs containing Vec<u8> across FFI.",
+          "passed": true,
+          "evidence": "Explains FAM structs cannot contain Vec<u8> across FFI and proposes continuous buffers."
+        },
+        {
+          "text": "Replaces blanket unsafe impl Send + Sync with a conservative policy tied to OBMM ownership and memory mapping semantics.",
+          "passed": true,
+          "evidence": "Replaces blanket Send/Sync with conservative policy tied to ownership/mmap semantics."
+        },
+        {
+          "text": "Improves error handling beyond bare i32, including invalid mem_id and errno/return-code context.",
+          "passed": true,
+          "evidence": "Improves error handling with invalid mem id, errno/return-code and operation context."
+        },
+        {
+          "text": "Adds ABI/regeneration checks, docs.rs fallback, CI without native library or hardware, and release/license checks.",
+          "passed": true,
+          "evidence": "Adds ABI/regeneration, docs.rs fallback, no-native/no-hardware CI and release/license checks."
+        },
+        {
+          "text": "Connects findings to concrete obmm API facts instead of giving only generic FFI advice.",
+          "passed": true,
+          "evidence": "Uses concrete libobmm facts: functions, CMake install, mem_id, FAM descriptors, ownership/query."
+        },
+        {
+          "text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.",
+          "passed": true,
+          "evidence": "No forbidden internal reference marker appears in the design output."
+        }
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "obmm-draft-review",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 9,
+        "failed": 0,
+        "total": 9,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Rejects or revises the single-crate-only plan in favor of a clear obmm-sys plus obmm split for publishable bindings.",
+          "passed": true,
+          "evidence": "Rejects single crate and recommends obmm-sys plus obmm."
+        },
+        {
+          "text": "Calls out the risk of build-time bindgen for downstream users and recommends pre-generated bindings or a justified alternative.",
+          "passed": true,
+          "evidence": "Calls out user build-time bindgen risk and recommends pre-generated bindings."
+        },
+        {
+          "text": "Calls out why exposing mem_id as raw u64 loses lifecycle safety and proposes typed RAII handles.",
+          "passed": true,
+          "evidence": "Explains raw u64 mem_id loses safety and proposes MemId plus RAII owner types."
+        },
+        {
+          "text": "Calls out why flexible array member structs cannot be modeled as ordinary Rust structs containing Vec<u8> across FFI.",
+          "passed": true,
+          "evidence": "Explains FAM + Vec layout mismatch and proposes header/buffer representation."
+        },
+        {
+          "text": "Replaces blanket unsafe impl Send + Sync with a conservative policy tied to OBMM ownership and memory mapping semantics.",
+          "passed": true,
+          "evidence": "Replaces blanket Send/Sync with conservative policy tied to OBMM ownership/mapping."
+        },
+        {
+          "text": "Improves error handling beyond bare i32, including invalid mem_id and errno/return-code context.",
+          "passed": true,
+          "evidence": "Improves error handling with invalid ID and errno/return-code context."
+        },
+        {
+          "text": "Adds ABI/regeneration checks, docs.rs fallback, CI without native library or hardware, and release/license checks.",
+          "passed": true,
+          "evidence": "Adds ABI/regeneration checks, docs.rs fallback, CI and release/license considerations."
+        },
+        {
+          "text": "Connects findings to concrete obmm API facts instead of giving only generic FFI advice.",
+          "passed": true,
+          "evidence": "Connects findings to libobmm.h, CMake and docs facts."
+        },
+        {
+          "text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.",
+          "passed": true,
+          "evidence": "No forbidden internal reference marker appears in the design output."
+        }
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      },
+      "tokens": {
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.81,
+        "stddev": 0.16,
+        "min": 0.62,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      },
+      "tokens": {
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.19",
+      "time_seconds": "+0",
+      "tokens": "+0"
+    }
+  },
+  "notes": [
+    "Iteration 2 was run via subagents, not codex exec.",
+    "Eval prompts ask for design documentation but do not hard-code a six-file count; agents decide structure.",
+    "Generating design documents is expected behavior and is not penalized.",
+    "Internal-marker leakage is checked against output design documents, not against the presence of a verification command in an agent status message."
+  ]
+}

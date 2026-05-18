@@ -1,0 +1,61 @@
+{
+  "expectations": [
+    {
+      "text": "Respects the no-scan constraint and does not claim concrete obmm API facts beyond the name obmm.",
+      "passed": true,
+      "evidence": "States it did not explore/read obmm sources and marks facts Unknown."
+    },
+    {
+      "text": "Produces organized design documentation with clear sections or files for architecture, binding/build, safe API, testing/release, and async/protocol analysis when applicable.",
+      "passed": true,
+      "evidence": "Organized into architecture, binding, safe API, async and checklist sections."
+    },
+    {
+      "text": "Uses Unknown or unresolved items for C API shape, resource model, errors, threading, build metadata, and license.",
+      "passed": true,
+      "evidence": "Uses Unknown for API shape, resources, errors, threading, build model and license."
+    },
+    {
+      "text": "Provides a conservative obmm-sys plus obmm default while explaining what evidence could change the decision.",
+      "passed": true,
+      "evidence": "Defaults to obmm-sys plus obmm and explains evidence that could change decisions."
+    },
+    {
+      "text": "Makes binding strategy explicit and names excluded alternatives.",
+      "passed": true,
+      "evidence": "Explicitly chooses pre-generated bindgen as a provisional path and excludes build-time bindgen, pure handwritten and wrapper.c defaults."
+    },
+    {
+      "text": "Covers build.rs/linking, docs.rs/CI fallback, safe wrappers, Error/Result, unsafe boundaries, Send/Sync, tests, and release checks.",
+      "passed": true,
+      "evidence": "Covers linking, docs.rs/CI fallback, safe wrappers, Error/Result, unsafe boundaries, Send/Sync, tests and release."
+    },
+    {
+      "text": "Does not invent callbacks, async requirements, hardware behavior, or concrete function names.",
+      "passed": true,
+      "evidence": "Does not claim concrete obmm function names; examples are clearly placeholder patterns/prefixes."
+    },
+    {
+      "text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.",
+      "passed": true,
+      "evidence": "No forbidden internal reference marker appears in the design output."
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "output_chars": 18849,
+    "errors_encountered": 0
+  },
+  "user_notes_summary": {
+    "uncertainties": [
+      "Timing/token metrics were not available from subagent notifications in this environment."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

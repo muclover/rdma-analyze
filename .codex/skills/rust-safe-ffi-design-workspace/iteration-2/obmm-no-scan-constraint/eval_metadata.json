@@ -1,0 +1,15 @@
+{
+  "eval_id": 2,
+  "eval_name": "obmm-no-scan-constraint",
+  "prompt": "给 obmm 做一个最初级的 Rust FFI 设计尝试，但这次不要探索代码库、不要读取头文件或文档。请输出方案设计文档，并清楚标记未知项。",
+  "assertions": [
+    "Respects the no-scan constraint and does not claim concrete obmm API facts beyond the name obmm.",
+    "Produces organized design documentation with clear sections or files for architecture, binding/build, safe API, testing/release, and async/protocol analysis when applicable.",
+    "Uses Unknown or unresolved items for C API shape, resource model, errors, threading, build metadata, and license.",
+    "Provides a conservative obmm-sys plus obmm default while explaining what evidence could change the decision.",
+    "Makes binding strategy explicit and names excluded alternatives.",
+    "Covers build.rs/linking, docs.rs/CI fallback, safe wrappers, Error/Result, unsafe boundaries, Send/Sync, tests, and release checks.",
+    "Does not invent callbacks, async requirements, hardware behavior, or concrete function names.",
+    "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D."
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "expectations": [
+    {
+      "text": "Respects the no-scan constraint and does not claim concrete obmm API facts beyond the name obmm.",
+      "passed": true,
+      "evidence": "States the no-scan constraint and does not read headers/docs."
+    },
+    {
+      "text": "Produces organized design documentation with clear sections or files for architecture, binding/build, safe API, testing/release, and async/protocol analysis when applicable.",
+      "passed": true,
+      "evidence": "Organized design sections cover sys crate, safe API, error, async/callback and tests."
+    },
+    {
+      "text": "Uses Unknown or unresolved items for C API shape, resource model, errors, threading, build metadata, and license.",
+      "passed": true,
+      "evidence": "Lists broad Unknown items for API, ABI, resources, errors, threading, build and license."
+    },
+    {
+      "text": "Provides a conservative obmm-sys plus obmm default while explaining what evidence could change the decision.",
+      "passed": true,
+      "evidence": "Recommends obmm-sys plus obmm and says headers must confirm details."
+    },
+    {
+      "text": "Makes binding strategy explicit and names excluded alternatives.",
+      "passed": false,
+      "evidence": "Does not explicitly name excluded binding strategies."
+    },
+    {
+      "text": "Covers build.rs/linking, docs.rs/CI fallback, safe wrappers, Error/Result, unsafe boundaries, Send/Sync, tests, and release checks.",
+      "passed": false,
+      "evidence": "Covers basic build.rs/safe/Error/tests but misses docs.rs/CI fallback and release checks."
+    },
+    {
+      "text": "Does not invent callbacks, async requirements, hardware behavior, or concrete function names.",
+      "passed": false,
+      "evidence": "Introduces concrete placeholder type obmm_handle/Obmm in a no-scan design; this is weaker than keeping all C API names unknown."
+    },
+    {
+      "text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.",
+      "passed": true,
+      "evidence": "No forbidden internal reference marker appears in the design output."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 3,
+    "total": 8,
+    "pass_rate": 0.62
+  },
+  "execution_metrics": {
+    "output_chars": 7814,
+    "errors_encountered": 0
+  },
+  "user_notes_summary": {
+    "uncertainties": [
+      "Timing/token metrics were not available from subagent notifications in this environment."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "expectations": [
+    {"text": "Names the fixed six deliverables README.md, ARCHITECTURE.md, BINDING.md, SAFE-API.md, CHECKLIST.md, and ASYNC-ANALYZE.md.", "passed": false, "evidence": "Output is a prose design and does not use the fixed six-deliverable structure."},
+    {"text": "Identifies libobmm's concrete API families: export/unexport, import/unimport, preimport/unpreimport, ownership, and query.", "passed": true, "evidence": "Output covers export/import/preimport, ownership and query."},
+    {"text": "Accounts for mem_id as the resource handle and OBMM_INVALID_MEMID as the invalid/error sentinel.", "passed": true, "evidence": "Output uses MemId/NonZero and discusses invalid mem id semantics."},
+    {"text": "Accounts for struct obmm_mem_desc and struct obmm_preimport_info using flexible array members with priv_len/priv allocation rules.", "passed": true, "evidence": "Output discusses FAM and descriptor allocation."},
+    {"text": "Recommends a publishable obmm-sys plus obmm crate split, with any third async/protocol layer explicitly deferred or justified.", "passed": true, "evidence": "Output recommends obmm-sys plus obmm and an optional tools/examples layer."},
+    {"text": "Chooses a binding path and excludes at least one alternative path with a reason.", "passed": false, "evidence": "Output recommends default bindgen but does not clearly exclude alternatives with reasons."},
+    {"text": "Specifies build.rs/linking details including links = \"obmm\", system linking, env overrides, and docs.rs or CI fallback behavior.", "passed": false, "evidence": "Output covers pkg-config/env/system linking but does not clearly include links = \"obmm\" or docs.rs fallback."},
+    {"text": "Defines safe API ownership boundaries with RAII guards for export/import/preimport lifecycles and Result/Error mapping.", "passed": true, "evidence": "Output defines lifecycle types and Result/Error mapping."},
+    {"text": "Defines Send/Sync policy conservatively for memory handles and ownership transitions.", "passed": true, "evidence": "Output is conservative around Drop/ownership and cross-host safety."},
+    {"text": "Includes ABI/regeneration/smoke testing and release checks including license and semver.", "passed": false, "evidence": "Output has ABI and smoke coverage but release/license/semver coverage is incomplete."},
+    {"text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.", "passed": true, "evidence": "No forbidden marker appears in final.md."}
+  ],
+  "summary": {"passed": 7, "failed": 4, "total": 11, "pass_rate": 0.64},
+  "execution_metrics": {"output_chars": 10642, "errors_encountered": 0},
+  "user_notes_summary": {"uncertainties": [], "needs_review": ["No fixed six-document deliverable shape."], "workarounds": []}
+}

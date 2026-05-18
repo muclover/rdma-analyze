@@ -1,0 +1,18 @@
+{
+  "expectations": [
+    {"text": "Names the fixed six deliverables README.md, ARCHITECTURE.md, BINDING.md, SAFE-API.md, CHECKLIST.md, and ASYNC-ANALYZE.md.", "passed": true, "evidence": "Output is organized as README.md, ARCHITECTURE.md, BINDING.md, SAFE-API.md, ASYNC-ANALYZE.md, and CHECKLIST.md sections."},
+    {"text": "Identifies libobmm's concrete API families: export/unexport, import/unimport, preimport/unpreimport, ownership, and query.", "passed": true, "evidence": "ARCHITECTURE section lists export/unexport, import/unimport, preimport/unpreimport, ownership, and query."},
+    {"text": "Accounts for mem_id as the resource handle and OBMM_INVALID_MEMID as the invalid/error sentinel.", "passed": true, "evidence": "Output states typedef uint64_t mem_id and OBMM_INVALID_MEMID == 0."},
+    {"text": "Accounts for struct obmm_mem_desc and struct obmm_preimport_info using flexible array members with priv_len/priv allocation rules.", "passed": true, "evidence": "Output calls out both FAM descriptors and descriptor buffer handling."},
+    {"text": "Recommends a publishable obmm-sys plus obmm crate split, with any third async/protocol layer explicitly deferred or justified.", "passed": true, "evidence": "Output chooses libobmm-sys plus obmm and defers a third protocol crate."},
+    {"text": "Chooses a binding path and excludes at least one alternative path with a reason.", "passed": true, "evidence": "Output chooses handwritten extern plus ABI/layout checks and excludes default build-time bindgen, wrapper.c, and mummy."},
+    {"text": "Specifies build.rs/linking details including links = \"obmm\", system linking, env overrides, and docs.rs or CI fallback behavior.", "passed": true, "evidence": "Output includes links = \"obmm\", dynamic system lib, env overrides, pkg-config/system path, and docs.rs fallback."},
+    {"text": "Defines safe API ownership boundaries with RAII guards for export/import/preimport lifecycles and Result/Error mapping.", "passed": true, "evidence": "Output defines ExportedMemory, ImportedMemory, PreimportedRange, Drop/close, Result and Error."},
+    {"text": "Defines Send/Sync policy conservatively for memory handles and ownership transitions.", "passed": true, "evidence": "Output says owner types default conservative and no handwritten unsafe impl without evidence."},
+    {"text": "Includes ABI/regeneration/smoke testing and release checks including license and semver.", "passed": true, "evidence": "Output includes ABI/layout checks, bindgen diff, CI paths, license and semver policy."},
+    {"text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.", "passed": true, "evidence": "No forbidden marker appears in final.md."}
+  ],
+  "summary": {"passed": 11, "failed": 0, "total": 11, "pass_rate": 1.0},
+  "execution_metrics": {"output_chars": 13991, "errors_encountered": 0},
+  "user_notes_summary": {"uncertainties": [], "needs_review": ["The run read more than the eval's listed minimal files, including implementation snippets and additional docs."], "workarounds": []}
+}

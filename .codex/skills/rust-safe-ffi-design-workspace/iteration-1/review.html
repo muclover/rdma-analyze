@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "rust-safe-ffi-design", "runs": [{"id": "obmm-full-static-design-with_skill", "prompt": "\u4e3a\u5f53\u524d\u4ed3\u5e93\u7684 obmm/src/libobmm \u8bbe\u8ba1\u4e00\u5957\u53ef\u53d1\u5e03\u7684 Rust FFI \u67b6\u6784\u3002\u5141\u8bb8\u9759\u6001\u9605\u8bfb\u5934\u6587\u4ef6\u3001CMake \u548c obmm/doc \u4e2d\u5fc5\u8981\u6587\u6863\uff1b\u4e0d\u8981\u7f16\u8bd1 C \u9879\u76ee\uff0c\u4e0d\u8981\u5b89\u88c5\u4f9d\u8d56\uff0c\u4e0d\u8981\u5b9e\u73b0\u4ee3\u7801\u3002\u8bf7\u8f93\u51fa\u8bbe\u8ba1\u65b9\u6848\u6b63\u6587\u3002", "eval_id": 1, "outputs": [{"name": "final.md", "type": "text", "content": "\u5df2\u6309\u6307\u5b9a `rust-safe-ffi-design` skill \u505a\u9759\u6001\u8bbe\u8ba1\uff1b\u672a\u7f16\u8bd1 C \u9879\u76ee\u3001\u672a\u5b89\u88c5\u4f9d\u8d56\u3001\u672a\u5b9e\u73b0\u4ee3\u7801\u3002\n\n**README.md \u6b63\u6587**\n\n\u672c\u65b9\u6848\u4e3a `obmm/src/libobmm` \u8bbe\u8ba1\u53ef\u53d1\u5e03\u5230 Rust \u751f\u6001\u7684 FFI \u67b6\u6784\u3002\u7ed3\u8bba\uff1a\u91c7\u7528 `libobmm-sys` + `obmm` \u53cc crate\uff1b`-sys` \u8d1f\u8d23 `libobmm.so` \u94fe\u63a5\u3001\u539f\u59cb ABI\u3001\u5e38\u91cf\u548c\u5e03\u5c40\u6821\u9a8c\uff0csafe crate \u8d1f\u8d23 `mem_id` \u8d44\u6e90 RAII\u3001`errno` \u9519\u8bef\u6620\u5c04\u3001flexible array \u63cf\u8ff0\u7b26\u6784\u9020\u3001\u8bbe\u5907\u6620\u5c04\u4e0e ownership API\u3002\n\n\u9605\u8bfb\u987a\u5e8f\uff1a\n\n1. `ARCHITECTURE.md`\uff1a\u5e93\u753b\u50cf\u3001crate \u5212\u5206\u548c\u53d1\u5e03\u7b56\u7565\u3002\n2. `BINDING.md`\uff1a\u7ed1\u5b9a\u751f\u6210\u3001\u94fe\u63a5\u3001`build.rs`\u3001ABI \u5b88\u536b\u3002\n3. `SAFE-API.md`\uff1asafe API \u7c7b\u578b\u3001\u6240\u6709\u6743\u3001\u9519\u8bef\u548c `unsafe` \u8fb9\u754c\u3002\n4. `ASYNC-ANALYZE.md`\uff1aasync \u9700\u6c42\u5224\u65ad\u3002\n5. `CHECKLIST.md`\uff1a\u4ece\u8c03\u7814\u5230\u53d1\u5e03\u7684\u6267\u884c\u6e05\u5355\u3002\n\n\u5f53\u524d\u72b6\u6001\uff1a\u8bbe\u8ba1\u9636\u6bb5\u3002\u9759\u6001\u9605\u8bfb\u8303\u56f4\u5305\u62ec `obmm/src/libobmm/libobmm.h`\u3001`vendor_adaptor.h`\u3001`CMakeLists.txt`\u3001`libobmm.c` \u7684\u5fc5\u8981 ABI \u7247\u6bb5\uff0c\u4ee5\u53ca `obmm/doc` \u4e2d libobmm\u3001export/import/preimport/shmdev/ownership/query \u6587\u6863\u3002\n\n**ARCHITECTURE.md \u6b63\u6587**\n\n\u5e93\u753b\u50cf\uff1a\n\n`libobmm` \u662f OBMM \u7528\u6237\u6001\u5e93\uff0c\u66b4\u9732 `libobmm.so`\uff0c\u901a\u8fc7 `/dev/obmm` ioctl \u4e0e\u5185\u6838\u6a21\u5757 `obmm.ko` \u4ea4\u4e92\u3002\u516c\u5171 API \u5f88\u5c0f\uff0c\u6838\u5fc3\u51fd\u6570\u65cf\u4e3a export/unexport\u3001import/unimport\u3001preimport/unpreimport\u3001ownership \u8bbe\u7f6e\u548c\u8c03\u8bd5\u67e5\u8be2\u3002\u8d44\u6e90\u53e5\u67c4\u662f `typedef uint64_t mem_id`\uff0c`OBMM_INVALID_MEMID == 0` \u8868\u793a\u5931\u8d25\u6216\u65e0\u6548 ID\u3002\n\nAPI \u4ee5\u503c\u7ed3\u6784\u4f53\u548c\u53e5\u67c4\u4e3a\u4e3b\uff0c\u6ca1\u6709 opaque \u6307\u9488\u3001ops \u8868\u3001\u56de\u8c03\u6216\u5f02\u6b65\u5b8c\u6210\u961f\u5217\u3002\u4e3b\u8981 ABI \u96be\u70b9\u662f\uff1a\n\n- `struct obmm_mem_desc` \u548c `struct obmm_preimport_info` \u4f7f\u7528 flexible array member `priv[]`\u3002\n- `libobmm.h` \u4f9d\u8d56\u5916\u90e8 `<ub/obmm.h>`\uff0c\u5176\u4e2d\u5305\u542b flags\u3001ioctl \u547d\u4ee4\u3001`OBMM_MAX_LOCAL_NUMA_NODES`\u3001`OBMM_MAX_PRIV_LEN` \u7b49\u5e38\u91cf\u3002\n- CMake \u53ea\u6784\u5efa\u5171\u4eab\u5e93 `libobmm.so`\uff0c\u5b89\u88c5 `libobmm.h` \u5230 include\uff0c\u672a\u770b\u5230 pkg-config \u6587\u4ef6\u3002\n- \u8fd0\u884c\u4f9d\u8d56\u7279\u5b9a\u5185\u6838\u6a21\u5757\u3001\u786c\u4ef6/\u5e73\u53f0\u3001`/dev/obmm`\u3001`/dev/obmm_shmdev{id}` \u548c sysfs/procfs\u3002\n\nCrate \u5206\u5c42\uff1a\n\n\u91c7\u7528 workspace\uff1a\n\n- `libobmm-sys`\uff1a\u53d1\u5e03\u539f\u59cb FFI\u3002\u5305\u542b `extern \"C\"` \u51fd\u6570\u3001`repr(C)` \u7c7b\u578b\u3001\u5e38\u91cf\u3001linking/build.rs\u3001ABI/layout \u6d4b\u8bd5\u3002\u516c\u5f00 raw API\uff0c\u4e0d\u63d0\u4f9b\u6240\u6709\u6743\u8bed\u4e49\u3002\n- `obmm`\uff1asafe crate\u3002\u5c01\u88c5 `ExportedMemory`\u3001`ImportedMemory`\u3001`PreimportedRange`\u3001`MemoryDescriptor`\u3001`MappedMemory`\u3001`Ownership`\u3001`Error` \u7b49\u7c7b\u578b\u3002\n- \u6682\u4e0d\u65b0\u589e\u7b2c\u4e09\u5c42\u534f\u8bae crate\u3002OBMM \u7684\u201c\u534f\u8bae\u201d\u4e3b\u8981\u662f\u8fdc\u7aef\u5185\u5b58\u751f\u547d\u5468\u671f\u3001NUMA \u4e0a\u7ebf\u548c ownership \u534f\u8c03\uff0c\u4e0d\u662f\u4e00\u4e2a\u72ec\u7acb wire protocol\uff1b\u53ef\u5148\u653e\u5728 safe crate \u7684 builder/API \u5c42\u3002\n\n\u53d1\u5e03\u76ee\u6807\uff1a\n\n\u6309 crates.io \u53d1\u5e03\u8bbe\u8ba1\u3002`libobmm-sys` \u4f7f\u7528 `links = \"obmm\"`\uff0c\u907f\u514d\u591a\u4e2a crate \u91cd\u590d\u94fe\u63a5\u4e0d\u540c\u7248\u672c `libobmm.so`\u3002`obmm` \u4f9d\u8d56\u540c\u7248\u672c\u8303\u56f4\u7684 `libobmm-sys`\u3002\u7248\u672c\u7b56\u7565\u5efa\u8bae\uff1a\n\n- `libobmm-sys` \u7684 minor/patch \u8ddf\u968f\u4e0a\u6e38 libobmm API \u517c\u5bb9\u66f4\u65b0\u3002\n- C ABI \u7834\u574f\u6027\u53d8\u5316\u65f6\u63d0\u5347 Rust major\u3002\n- safe crate \u53ef\u5728\u4e0d\u7834\u574f raw ABI \u7684\u60c5\u51b5\u4e0b\u589e\u52a0\u66f4\u9ad8\u5c42 builder\uff0c\u4f46\u4e0d\u5f97\u6539\u53d8\u5df2\u6709 RAII \u91ca\u653e\u8bed\u4e49\u3002\n\n\u8bb8\u53ef\u8bc1\uff1a\n\n\u7528\u6237\u6001\u5e93\u58f0\u660e\u4e3a Mulan PSL v2\uff1b\u5185\u6838\u6001\u9a71\u52a8\u4e3a GPL-2.0\u3002Rust crate \u82e5\u53ea\u52a8\u6001\u94fe\u63a5\u7cfb\u7edf `libobmm.so`\uff0ccrate \u81ea\u8eab\u53ef\u9009 Apache-2.0/MIT/Mulan PSL v2\uff0c\u4f46 README \u5fc5\u987b\u8bf4\u660e\u8fd0\u884c\u4f9d\u8d56\u7684\u7528\u6237\u6001\u5e93\u8bb8\u53ef\u8bc1\u548c\u5185\u6838\u6a21\u5757\u8bb8\u53ef\u8bc1\u3002\u9ed8\u8ba4\u4e0d vendored C \u6e90\u7801\uff0c\u907f\u514d\u628a\u5185\u6838/\u5e73\u53f0\u4f9d\u8d56\u548c\u8bb8\u53ef\u8bc1\u8fb9\u754c\u6df7\u5165 Rust crate\u3002\n\n\u6838\u5fc3\u51b3\u7b56\u6458\u8981\uff1a\n\n| \u4e3b\u9898 | \u51b3\u7b56 | \u7406\u7531 |\n|---|---|---|\n| \u5206\u5c42 | `libobmm-sys` + `obmm` | raw ABI \u4e0e safe \u751f\u547d\u5468\u671f\u5206\u79bb\uff0c\u9002\u5408\u53d1\u5e03 |\n| \u7ed1\u5b9a | \u5c0f API \u624b\u5199 extern + \u9884\u751f\u6210/\u6821\u9a8c\u5e38\u91cf\u5e03\u5c40 | \u51fd\u6570\u5c11\uff0c\u624b\u5199\u66f4\u7a33\u5b9a\uff1b\u5916\u90e8 UAPI \u5e38\u91cf\u9700\u6821\u9a8c |\n| \u94fe\u63a5 | \u9ed8\u8ba4 system shared lib\uff0c`links = \"obmm\"` | CMake \u4ea7\u7269\u662f `libobmm.so`\uff0c\u8fd0\u884c\u9700\u771f\u5b9e\u5e73\u53f0 |\n| vendored | \u975e\u9ed8\u8ba4\uff0c\u5148\u4e0d\u652f\u6301 | \u4f9d\u8d56\u5916\u90e8 `<ub/obmm.h>`\u3001\u5185\u6838\u6a21\u5757\u548c\u786c\u4ef6\u73af\u5883 |\n| safe \u6240\u6709\u6743 | `mem_id` RAII \u7c7b\u578b\u533a\u5206 export/import/preimport | `unexport` \u4e0e `unimport` \u4e0d\u53ef\u6df7\u7528 |\n| async | N/A | C API \u662f\u540c\u6b65\u63a7\u5236\u9762\uff0c\u6570\u636e\u8bbf\u95ee\u8d70 mmap/load/store |\n\n\u4e3b\u8981\u98ce\u9669\uff1a\n\n- \u4ed3\u5e93\u4e2d\u672a\u5305\u542b `<ub/obmm.h>`\uff0c\u53d1\u5e03\u524d\u5fc5\u987b\u786e\u8ba4 dev \u5305\u5b89\u88c5\u8def\u5f84\u6216\u968f libobmm \u5b89\u88c5\u8be5 UAPI \u5934\u3002\n- `OBMM_MAX_LOCAL_NUMA_NODES` \u6765\u81ea\u5916\u90e8\u5934\uff0c\u4e0d\u80fd\u5728 Rust \u4e2d\u786c\u7f16\u7801\u4e3a `MAX_NUMA_NODES`\uff0c\u9664\u975e ABI \u6d4b\u8bd5\u786e\u8ba4\u4e00\u81f4\u3002\n- `obmm_export_useraddr` \u6709\u9ad8\u98ce\u9669\u8bed\u4e49\uff1apin \u7528\u6237\u5730\u5740\uff0c\u4e14\u6587\u6863\u8bf4\u660e unexport \u524d\u5185\u6838\u6001\u8bbf\u95ee\u76ee\u6807\u5185\u5b58\u53ef\u80fd\u5bfc\u81f4\u5bbf\u4e3b\u673a panic\u3002safe API \u5fc5\u987b\u628a\u5b83\u8bbe\u8ba1\u6210\u663e\u5f0f `unsafe` \u6216\u653e\u5728\u72ec\u7acb `unsafe` builder \u4e2d\u3002\n- `obmm_unexport` \u8981\u6c42\u7528\u6237\u4fdd\u8bc1\u8fdc\u7aef\u4f7f\u7528\u8005\u5df2\u505c\u6b62\u8bbf\u95ee\uff1bRust RAII \u53ea\u80fd\u91ca\u653e\u672c\u673a\u8d44\u6e90\uff0c\u4e0d\u80fd\u8bc1\u660e\u8de8 host \u534f\u8bae\u5b89\u5168\u3002\n\n**BINDING.md \u6b63\u6587**\n\n\u7ed1\u5b9a\u8def\u5f84\uff1a\n\n\u9009\u62e9\u201c\u624b\u5199 public extern + ABI/layout \u5b88\u536b + \u53ef\u9009 bindgen \u518d\u751f\u8f85\u52a9\u201d\u3002\n\n\u539f\u56e0\uff1a\n\n- \u516c\u5171\u51fd\u6570\u53ea\u6709 9 \u4e2a\uff0c\u51fd\u6570\u7b7e\u540d\u7a33\u5b9a\uff0c\u624b\u5199 `extern \"C\"` \u53ef\u8bfb\u6027\u548c\u5ba1\u67e5\u6210\u672c\u4f18\u4e8e\u6574\u5934 bindgen\u3002\n- \u7ed3\u6784\u4f53\u53ea\u6709\u4e24\u4e2a public flexible array member \u7c7b\u578b\uff0cbindgen \u4f1a\u751f\u6210\u4e0d\u9002\u5408 safe \u5c42\u76f4\u63a5\u6d88\u8d39\u7684 `__IncompleteArrayField`\uff1bsafe \u5c42\u9700\u8981\u81ea\u5efa owned buffer\u3002\n- \u4ecd\u9700\u8981 bindgen \u6216 C ABI \u6d4b\u8bd5\u6355\u83b7 `<ub/obmm.h>` \u4e2d\u5e38\u91cf\u3001`size_t`/`unsigned long` \u5bbd\u5ea6\u3001\u7ed3\u6784\u4f53 offset\u3001flags \u503c\u548c ioctl \u76f8\u5173 ABI \u53d8\u5316\u3002\n\n\u6392\u9664\u8def\u5f84\uff1a\n\n- \u4e0d\u91c7\u7528\u6784\u5efa\u65f6 bindgen \u4f5c\u4e3a\u9ed8\u8ba4\u8def\u5f84\uff1adocs.rs \u548c\u7528\u6237\u6784\u5efa\u4f1a\u989d\u5916\u4f9d\u8d56 libclang\u3001\u5916\u90e8 UAPI \u5934\u3001\u76ee\u6807\u7cfb\u7edf dev \u5305\uff0c\u53d1\u5e03\u4f53\u9a8c\u5dee\u3002\n- \u4e0d\u91c7\u7528 `wrapper.c` \u4f5c\u4e3a\u4e3b\u8def\u5f84\uff1a\u5934\u6587\u4ef6\u6ca1\u6709\u5927\u91cf `static inline`\u3001bitfield \u6216\u5fc5\u987b\u7531 C \u7f16\u8bd1\u5668\u89e3\u91ca\u7684\u5b8f API\u3002\n- \u4e0d\u91c7\u7528 mummy\uff1a\u5f53\u524d\u95ee\u9898\u4e0d\u662f\u201c\u65e0 dev \u5305\u4ecd\u9700\u94fe\u63a5 inline \u7b26\u53f7\u201d\uff0c\u800c\u662f\u771f\u5b9e\u8fd0\u884c\u9700\u8981\u5185\u6838\u6a21\u5757\u548c\u786c\u4ef6\u73af\u5883\uff1bmummy \u4e0d\u80fd\u66ff\u4ee3\u8fd0\u884c\u73af\u5883\u3002\n\n`libobmm-sys` \u5185\u5bb9\uff1a\n\n- `type mem_id = u64` \u6216\u66f4 Rust \u5316\u5730\u5bfc\u51fa `pub type obmm_mem_id = u64`\uff0c\u540c\u65f6\u4fdd\u7559 C \u547d\u540d\u522b\u540d\u3002\n- `#[repr(C)]` \u7684 raw header \u90e8\u5206\uff1a`obmm_mem_desc` \u4e0d\u5e94\u76f4\u63a5\u5305\u542b Rust slice\uff1braw \u5c42\u53ef\u8868\u8fbe fixed header\uff0c\u5e76\u63d0\u4f9b `priv` \u8d77\u59cb offset \u5e38\u91cf\u3002\n- `obmm_preimport_info` \u540c\u7406\u3002\n- `extern \"C\"`\uff1a`obmm_export`\u3001`obmm_export_useraddr`\u3001`obmm_unexport`\u3001`obmm_import`\u3001`obmm_unimport`\u3001`obmm_preimport`\u3001`obmm_unpreimport`\u3001`obmm_set_ownership`\u3001`obmm_query_*`\u3002\n- flags/\u5e38\u91cf\u4ece\u751f\u6210\u6587\u4ef6\u6216\u4eba\u5de5\u7ef4\u62a4\u6587\u4ef6\u5bfc\u51fa\uff0c\u5e76\u7528 ABI \u6d4b\u8bd5\u9a8c\u8bc1\u3002\n\n`build.rs` \u63a2\u6d4b\u987a\u5e8f\uff1a\n\n1. \u73af\u5883\u53d8\u91cf override\uff1a`LIBOBMM_LIB_DIR`\u3001`LIBOBMM_INCLUDE_DIR`\u3001`LIBOBMM_STATIC`\u3002\n2. `pkg-config obmm`\uff0c\u5982\u679c\u4e0a\u6e38\u672a\u6765\u63d0\u4f9b `.pc`\u3002\n3. \u5e38\u89c1\u7cfb\u7edf\u8def\u5f84\uff1a`/usr/lib64`\u3001`/usr/lib`\u3001`/usr/local/lib64`\u3001`/usr/local/lib`\uff0cinclude \u5bf9\u5e94 `/usr/include`\u3001`/usr/local/include`\u3002\n4. docs.rs\uff1a\u4e0d\u5c1d\u8bd5\u94fe\u63a5\u771f\u5b9e\u7cfb\u7edf\u5e93\uff0c\u53ea\u751f\u6210\u6587\u6863 cfg\uff0craw extern \u4fdd\u7559\u4f46\u8df3\u8fc7 link probe\u3002\n5. vendored feature\uff1a\u6682\u4e0d\u9ed8\u8ba4\u8bbe\u8ba1\uff1b\u53ea\u6709\u4e0a\u6e38\u660e\u786e\u63d0\u4f9b\u5b8c\u6574\u7528\u6237\u6001\u6e90\u7801\u3001UAPI \u5934\u548c\u8bb8\u53ef\u786e\u8ba4\u540e\u518d\u52a0\u3002\n\n\u94fe\u63a5\u7b56\u7565\uff1a\n\n- `links = \"obmm\"`\u3002\n- \u9ed8\u8ba4\u52a8\u6001\u94fe\u63a5\uff1a`cargo:rustc-link-lib=dylib=obmm`\u3002\n- \u9759\u6001\u94fe\u63a5\u53ea\u5141\u8bb8\u7528\u6237\u663e\u5f0f\u542f\u7528\uff0c\u5e76\u5728\u6587\u6863\u4e2d\u63d0\u793a Mulan PSL v2 \u5206\u53d1\u4e49\u52a1\u548c\u76ee\u6807\u7cfb\u7edf ABI \u98ce\u9669\u3002\n- \u4e0d\u5728 safe crate \u76f4\u63a5\u94fe\u63a5 C \u5e93\uff0c\u6240\u6709\u94fe\u63a5\u96c6\u4e2d\u5728 `libobmm-sys`\u3002\n\n\u7ed1\u5b9a\u518d\u751f\u4e0e ABI \u5b88\u536b\uff1a\n\n- \u7ef4\u62a4\u4e00\u4e2a `ffi/obmm_abi.h` \u53ea include `<libobmm.h>` \u548c\u5fc5\u8981\u7cfb\u7edf\u5934\u3002\n- CI \u4e2d\u6709\u201c\u6709 dev \u5305\u201d\u4f5c\u4e1a\u8fd0\u884c `bindgen --allowlist-function obmm_.* --allowlist-type obmm_.* --allowlist-var OBMM_.*` \u751f\u6210\u4e34\u65f6\u6587\u4ef6\u5e76 diff \u5e38\u91cf/\u7b7e\u540d\u3002\n- \u7528 `ctest2` \u6216\u7b49\u4ef7 C \u5c0f\u7a0b\u5e8f\u6821\u9a8c `sizeof`\u3001`alignof`\u3001\u5b57\u6bb5 offset\u3001\u5e38\u91cf\u503c\u3002\n- \u65e0\u786c\u4ef6 CI \u53ea\u505a\u7f16\u8bd1\u548c ABI/layout\uff1b\u771f\u5b9e ioctl \u6210\u529f\u8def\u5f84\u653e\u5230\u5916\u90e8\u786c\u4ef6\u96c6\u6210\u6d4b\u8bd5\u3002\n\n**SAFE-API.md \u6b63\u6587**\n\n\u6a21\u5757\u6811\u5efa\u8bae\uff1a\n\n- `obmm::desc`\uff1a`MemoryDescriptor`\u3001`PreimportInfo`\u3001`Eid`\u3001`PrivateData`\u3002\n- `obmm::export`\uff1a`ExportBuilder`\u3001`ExportedMemory`\u3001`ExportedUserAddrMemory`\u3002\n- `obmm::import`\uff1a`ImportBuilder`\u3001`ImportedMemory`\u3001`PreimportedRange`\u3002\n- `obmm::device`\uff1a`MemoryDevice`\u3001`MappedMemory`\u3001`MapOptions`\u3002\n- `obmm::ownership`\uff1a`Ownership::{None, Read, ReadWrite}`\u3002\n- `obmm::query`\uff1a\u5730\u5740\u67e5\u8be2\u3002\n- `obmm::error`\uff1a`Error`\u3001`Errno`\u3001`Result<T>`\u3002\n\n\u6838\u5fc3\u7c7b\u578b\uff1a\n\n- `MemId(NonZeroU64)`\uff1a\u7981\u6b62\u6784\u9020 0\u3002\n- `ExportedMemory`\uff1a\u6301\u6709 `MemId`\uff0c`Drop` \u8c03\u7528 `obmm_unexport(id, 0)`\u3002\n- `ImportedMemory`\uff1a\u6301\u6709 `MemId`\uff0c`Drop` \u8c03\u7528 `obmm_unimport(id, 0)`\u3002\n- `PreimportedRange`\uff1a\u6301\u6709 `pa`\u3001`length`\uff0c`Drop` \u8c03\u7528 `obmm_unpreimport`\u3002\u5fc5\u987b\u8bb0\u5f55\u7cbe\u786e\u5339\u914d\u5b57\u6bb5\uff0c\u56e0\u4e3a C API \u8981\u6c42 pa/length \u7cbe\u786e\u5339\u914d\u3002\n- `MemoryDescriptor`\uff1aowned buffer\uff0c\u5185\u90e8\u5e03\u5c40\u4e3a fixed header + `priv` bytes\uff0c\u907f\u514d\u7528\u6237\u624b\u5199 flexible array\u3002\n- `MemoryDevice`\uff1a\u6253\u5f00 `/dev/obmm_shmdev{id}` \u7684 fd owner\u3002\n- `MappedMemory`\uff1ammap \u540e\u7684 owner\uff0c`Drop` \u5148 `munmap` \u518d\u91ca\u653e fd owner \u5f15\u7528\u3002\n\nRAII \u89c4\u5219\uff1a\n\n- `ExportedMemory` \u4e0e `ImportedMemory` \u7c7b\u578b\u5206\u5f00\uff0c\u9632\u6b62\u628a import id \u4f20\u7ed9 `unexport` \u6216\u53cd\u5411\u4f20\u9519\u3002\n- Drop \u5931\u8d25\u4e0d\u80fd panic\uff1b\u8bb0\u5f55\u9519\u8bef\u7684\u7b56\u7565\u5e94\u662f `close()`/`unexport()` \u663e\u5f0f\u65b9\u6cd5\u8fd4\u56de `Result`\uff0cDrop \u4ec5 best-effort\u3002\n- \u8bbe\u5907\u6620\u5c04\u5b58\u5728\u65f6\u4e0d\u5141\u8bb8\u9500\u6bc1\u5185\u5b58\u8bbe\u5907\u3002safe \u5c42\u901a\u8fc7\u6240\u6709\u6743\u5173\u7cfb\u8ba9 `MappedMemory` \u501f\u7528\u6216\u6301\u6709 `Arc<MemoryDevice>`\uff0c\u5e76\u8ba9 `MemoryDevice` \u5173\u8054\u7236 `ExportedMemory`/`ImportedMemory`\uff0c\u4fdd\u8bc1 drop \u987a\u5e8f\u4e3a mapping -> fd -> memid\u3002\n- `obmm_export_useraddr` \u8bbe\u8ba1\u4e3a `unsafe fn export_user_addr(...)`\uff0c\u56e0\u4e3a Rust \u65e0\u6cd5\u8bc1\u660e\u76ee\u6807\u5730\u5740 PMD \u5bf9\u9f50\u3001\u6620\u5c04\u7c92\u5ea6\u3001\u6743\u9650\u3001pin \u671f\u95f4\u5185\u6838\u8bbf\u95ee\u98ce\u9669\u548c\u8de8\u8fdb\u7a0b\u751f\u547d\u5468\u671f\u3002\n\n\u9519\u8bef\u6a21\u578b\uff1a\n\n- C API \u5931\u8d25\u7edf\u4e00\u8bfb\u53d6 `errno`\u3002\n- \u8fd4\u56de `mem_id` \u7684\u51fd\u6570\uff1a`0` \u6620\u5c04\u4e3a `Err(Error::last_os_error(Operation::Export/Import/...))`\u3002\n- \u8fd4\u56de `int` \u7684\u51fd\u6570\uff1a`-1` \u6620\u5c04\u4e3a `Err`\uff0c`0` \u4e3a `Ok(())`\u3002\n- \u9519\u8bef\u7c7b\u578b\u4fdd\u7559\u539f\u59cb `errno`\uff0c\u540c\u65f6\u643a\u5e26\u64cd\u4f5c\u540d\u548c\u5173\u952e\u4e0a\u4e0b\u6587\uff0c\u5982 `mem_id`\u3001`pa/length`\u3001flags\u3002\n\n`Send`/`Sync` \u7b56\u7565\uff1a\n\n- `MemId` \u53ef\u4ee5\u662f\u503c\u7c7b\u578b\uff0c\u4f46\u8d44\u6e90 owner \u9ed8\u8ba4\u4e0d\u5b9e\u73b0\u6216\u4e0d\u663e\u5f0f\u627f\u8bfa `Sync`\uff0c\u9664\u975e\u786e\u8ba4 libobmm \u548c\u5185\u6838\u63a5\u53e3\u5bf9\u540c\u4e00 memid \u7684\u5e76\u53d1\u64cd\u4f5c\u8bed\u4e49\u3002\n- `MappedMemory` \u9ed8\u8ba4\u4e0d\u5b9e\u73b0 `Sync`\uff1b\u662f\u5426 `Send` \u53d6\u51b3\u4e8e fd/mmap \u751f\u547d\u5468\u671f\u548c\u6240\u6709\u6743\u6a21\u578b\uff0c\u5efa\u8bae\u5148\u4fdd\u5b88\uff0c\u4e0d\u624b\u5199 `unsafe impl Send/Sync`\u3002\n- ownership \u53d8\u66f4\u6d89\u53ca\u8de8 host \u4e00\u81f4\u6027\uff0csafe API \u53ea\u80fd\u4fdd\u8bc1\u672c\u8fdb\u7a0b\u8c03\u7528\u5f62\u5f0f\u6b63\u786e\uff0c\u4e0d\u80fd\u4fdd\u8bc1\u5206\u5e03\u5f0f\u4e92\u65a5\uff1b\u6587\u6863\u5fc5\u987b\u8981\u6c42\u8c03\u7528\u65b9\u5b9e\u73b0\u8de8 host \u534f\u8c03\u3002\n\n\u516c\u5f00 `unsafe` \u5951\u7ea6\uff1a\n\n- `export_user_addr`\uff1a\u8c03\u7528\u65b9\u4fdd\u8bc1\u5730\u5740\u3001\u957f\u5ea6\u3001\u6743\u9650\u3001hugetlb/THP\u3001pid \u751f\u547d\u5468\u671f\u548c unexport \u524d\u8bbf\u95ee\u7ea6\u675f\u3002\n- \u4ece raw descriptor \u6784\u9020 safe descriptor\uff1a\u8c03\u7528\u65b9\u4fdd\u8bc1 buffer \u81f3\u5c11\u4e3a fixed header + `priv_len`\uff0c\u5b57\u6bb5\u7b26\u5408 C ABI\u3002\n- \u4ece raw fd \u6216 raw pointer \u6784\u9020 `MemoryDevice`/`MappedMemory`\uff1a\u8c03\u7528\u65b9\u4fdd\u8bc1\u552f\u4e00\u6240\u6709\u6743\u6216\u660e\u786e\u501f\u7528\u5173\u7cfb\uff0c\u907f\u514d double close/munmap\u3002\n\n\u6682\u4e0d\u5c01\u88c5\u533a\u57df\uff1a\n\n- `vendor_adaptor.h` \u662f libobmm \u5185\u90e8\u9002\u914d\u63a5\u53e3\uff0c\u4e0d\u8fdb\u5165 Rust public API\u3002\n- `/dev/obmm` ioctl \u539f\u59cb\u547d\u4ee4\u4e0d\u76f4\u63a5\u66b4\u9732\uff1bRust \u7528\u6237\u5e94\u7ecf libobmm public API\u3002\n- sysfs \u7ef4\u6d4b\u6587\u4ef6\u53ef\u540e\u7eed\u589e\u52a0\u53ea\u8bfb helper\uff0c\u4f46\u4e0d\u4f5c\u4e3a\u7b2c\u4e00\u7248\u6838\u5fc3 safe API\u3002\n\n**ASYNC-ANALYZE.md \u6b63\u6587**\n\n\u7ed3\u8bba\uff1a\u7b2c\u4e00\u7248\u4e0d\u8bbe\u8ba1 async crate\u3002\n\n\u7406\u7531\uff1a\n\n- `libobmm` public API \u662f\u540c\u6b65\u63a7\u5236\u9762\u8c03\u7528\uff0c\u6210\u529f\u540e\u6570\u636e\u9762\u901a\u8fc7 mmap \u540e\u7684\u666e\u901a load/store \u5b8c\u6210\u3002\n- \u6ca1\u6709 fd readiness\u3001completion queue\u3001callback \u6216 poll/multi API \u9700\u8981 runtime \u96c6\u6210\u3002\n- \u963b\u585e\u70b9\u4e3b\u8981\u662f ioctl\u3001NUMA \u4e0a\u7ebf\u3001\u5185\u5b58\u5206\u914d\u3001preimport/import/export\uff0c\u8fd9\u4e9b\u66f4\u9002\u5408\u7531\u8c03\u7528\u65b9\u653e\u5165\u7ebf\u7a0b\u6c60\u6216\u542f\u52a8\u9636\u6bb5\u6267\u884c\u3002\n- async runtime \u4f9d\u8d56\u4e0d\u5e94\u8fdb\u5165 `libobmm-sys`\u3002safe crate \u53ef\u4ee5\u63d0\u4f9b\u540c\u6b65 API\uff1b\u5982\u679c\u4e1a\u52a1\u540e\u7eed\u9700\u8981 Tokio \u5c01\u88c5\uff0c\u5e94\u5728\u72ec\u7acb `obmm-tokio` \u6216\u5e94\u7528\u5c42\u7528 `spawn_blocking` \u5305\u88c5\u3002\n\n\u4f8b\u5916\uff1a\n\n- \u82e5\u540e\u7eed\u4e0a\u6e38\u589e\u52a0\u4e8b\u4ef6 fd\u3001\u5f02\u6b65 import/export \u72b6\u6001\u67e5\u8be2\u3001ownership \u53d8\u66f4\u5b8c\u6210\u901a\u77e5\uff0c\u518d\u65b0\u589e `obmm-async` \u6216 `obmm-tokio`\u3002\n- sysfs/procfs \u76d1\u63a7\u53ef\u505a\u666e\u901a\u963b\u585e\u8bfb\u53d6\uff0c\u4e0d\u6784\u6210 FFI async \u9700\u6c42\u3002\n\n**CHECKLIST.md \u6b63\u6587**\n\n\u8c03\u7814\uff1a\n\n- \u786e\u8ba4\u4e0a\u6e38 dev \u5305\u662f\u5426\u5b89\u88c5 `libobmm.h` \u548c `<ub/obmm.h>`\u3002\n- \u786e\u8ba4 `OBMM_MAX_LOCAL_NUMA_NODES`\u3001`OBMM_MAX_PRIV_LEN`\u3001flags\u3001`OBMM_MMAP_FLAG_HUGETLB_PMD` \u7684\u5b9a\u4e49\u6765\u6e90\u3002\n- \u786e\u8ba4 `libobmm.so` \u662f\u5426\u6709\u7a33\u5b9a SONAME\u3001\u662f\u5426\u4f1a\u53d1\u5e03 pkg-config \u6587\u4ef6\u3002\n- \u786e\u8ba4\u76ee\u6807\u5e73\u53f0\uff1aLinux only\u3001\u67b6\u6784\u3001openEuler/kernel \u7248\u672c\u3001\u786c\u4ef6\u4f9d\u8d56\u3002\n\n\u7ed1\u5b9a\uff1a\n\n- \u5efa\u7acb `libobmm-sys`\uff0c\u58f0\u660e `links = \"obmm\"`\u3002\n- \u624b\u5199 extern \u51fd\u6570\u7b7e\u540d\u3002\n- \u4e3a flexible array member \u8bbe\u8ba1 raw header + offset \u6821\u9a8c\u3002\n- \u6dfb\u52a0 `build.rs` \u7684 env/pkg-config/system path/docs.rs \u5206\u652f\u3002\n- \u6dfb\u52a0 ABI/layout/constant \u6821\u9a8c\uff0c\u81f3\u5c11\u8986\u76d6\u4e24\u4e2a descriptor\u3001`mem_id`\u3001flags \u548c\u51fd\u6570\u7b7e\u540d\u3002\n\nSafe API\uff1a\n\n- \u5b9e\u73b0 `MemId(NonZeroU64)`\u3002\n- \u5206\u79bb `ExportedMemory`\u3001`ImportedMemory`\u3001`PreimportedRange`\u3002\n- \u4e3a `MemoryDescriptor` \u548c `PreimportInfo` \u63d0\u4f9b builder\uff0c\u81ea\u52a8\u5904\u7406 `priv_len` \u548c buffer \u5927\u5c0f\u3002\n- \u663e\u5f0f `close/unexport/unimport/unpreimport` \u8fd4\u56de `Result`\uff0cDrop best-effort\u3002\n- `export_user_addr` \u4fdd\u6301 `unsafe` \u5e76\u5199\u5b8c\u6574 `# Safety`\u3002\n- \u4fdd\u5b88\u5904\u7406 `Send`/`Sync`\uff0c\u6ca1\u6709\u4f9d\u636e\u4e0d\u624b\u5199 unsafe impl\u3002\n\n\u6d4b\u8bd5\u4e0e CI\uff1a\n\n- \u65e0\u786c\u4ef6 CI\uff1a`cargo check`\u3001layout/constant \u751f\u6210\u68c0\u67e5\u3001docs.rs\u3002\n- \u6709 dev \u5305 CI\uff1alink smoke test \u4ec5\u786e\u8ba4\u53ef\u94fe\u63a5\uff0c\u4e0d\u8981\u6c42 `/dev/obmm` \u5b58\u5728\u3002\n- \u5916\u90e8\u786c\u4ef6 CI\uff1aexport/import/preimport/unimport/unexport\u3001mmap\u3001ownership\u3001query \u7684\u771f\u5b9e\u5de5\u4f5c\u6d41\u3002\n- negative tests\uff1a\u65e0\u6548 memid\u3001\u975e\u6cd5 flags\u3001\u8d85\u957f priv\u3001\u672a\u5bf9\u9f50\u957f\u5ea6\u3001Drop \u987a\u5e8f\u3002\n\n\u53d1\u5e03\uff1a\n\n- README \u8bf4\u660e\u7cfb\u7edf\u4f9d\u8d56\u3001\u5185\u6838\u6a21\u5757\u3001\u786c\u4ef6\u5e73\u53f0\u3001\u8bb8\u53ef\u8bc1\u3002\n- crate feature \u660e\u786e\uff1a\u9ed8\u8ba4 dynamic system\uff1b`static`/`vendored` \u6682\u4e0d\u9ed8\u8ba4\u3002\n- \u8bb0\u5f55\u4e0a\u6e38\u7248\u672c `1.0.1` \u7684\u7ed1\u5b9a\u57fa\u7ebf\u3002\n- \u6bcf\u6b21\u4e0a\u6e38\u5347\u7ea7\u5148\u8dd1 ABI diff\uff0c\u518d\u51b3\u5b9a Rust semver\u3002"}], "grading": {"expectations": [{"text": "Names the fixed six deliverables README.md, ARCHITECTURE.md, BINDING.md, SAFE-API.md, CHECKLIST.md, and ASYNC-ANALYZE.md.", "passed": true, "evidence": "Output is organized as README.md, ARCHITECTURE.md, BINDING.md, SAFE-API.md, ASYNC-ANALYZE.md, and CHECKLIST.md sections."}, {"text": "Identifies libobmm's concrete API families: export/unexport, import/unimport, preimport/unpreimport, ownership, and query.", "passed": true, "evidence": "ARCHITECTURE section lists export/unexport, import/unimport, preimport/unpreimport, ownership, and query."}, {"text": "Accounts for mem_id as the resource handle and OBMM_INVALID_MEMID as the invalid/error sentinel.", "passed": true, "evidence": "Output states typedef uint64_t mem_id and OBMM_INVALID_MEMID == 0."}, {"text": "Accounts for struct obmm_mem_desc and struct obmm_preimport_info using flexible array members with priv_len/priv allocation rules.", "passed": true, "evidence": "Output calls out both FAM descriptors and descriptor buffer handling."}, {"text": "Recommends a publishable obmm-sys plus obmm crate split, with any third async/protocol layer explicitly deferred or justified.", "passed": true, "evidence": "Output chooses libobmm-sys plus obmm and defers a third protocol crate."}, {"text": "Chooses a binding path and excludes at least one alternative path with a reason.", "passed": true, "evidence": "Output chooses handwritten extern plus ABI/layout checks and excludes default build-time bindgen, wrapper.c, and mummy."}, {"text": "Specifies build.rs/linking details including links = \"obmm\", system linking, env overrides, and docs.rs or CI fallback behavior.", "passed": true, "evidence": "Output includes links = \"obmm\", dynamic system lib, env overrides, pkg-config/system path, and docs.rs fallback."}, {"text": "Defines safe API ownership boundaries with RAII guards for export/import/preimport lifecycles and Result/Error mapping.", "passed": true, "evidence": "Output defines ExportedMemory, ImportedMemory, PreimportedRange, Drop/close, Result and Error."}, {"text": "Defines Send/Sync policy conservatively for memory handles and ownership transitions.", "passed": true, "evidence": "Output says owner types default conservative and no handwritten unsafe impl without evidence."}, {"text": "Includes ABI/regeneration/smoke testing and release checks including license and semver.", "passed": true, "evidence": "Output includes ABI/layout checks, bindgen diff, CI paths, license and semver policy."}, {"text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, \u88c1\u5b9a, or \u9636\u6bb5 C/D.", "passed": true, "evidence": "No forbidden marker appears in final.md."}], "summary": {"passed": 11, "failed": 0, "total": 11, "pass_rate": 1.0}, "execution_metrics": {"output_chars": 13991, "errors_encountered": 0}, "user_notes_summary": {"uncertainties": [], "needs_review": ["The run read more than the eval's listed minimal files, including implementation snippets and additional docs."], "workarounds": []}}}, {"id": "obmm-full-static-design-without_skill", "prompt": "\u4e3a\u5f53\u524d\u4ed3\u5e93\u7684 obmm/src/libobmm \u8bbe\u8ba1\u4e00\u5957\u53ef\u53d1\u5e03\u7684 Rust FFI \u67b6\u6784\u3002\u5141\u8bb8\u9759\u6001\u9605\u8bfb\u5934\u6587\u4ef6\u3001CMake \u548c obmm/doc \u4e2d\u5fc5\u8981\u6587\u6863\uff1b\u4e0d\u8981\u7f16\u8bd1 C \u9879\u76ee\uff0c\u4e0d\u8981\u5b89\u88c5\u4f9d\u8d56\uff0c\u4e0d\u8981\u5b9e\u73b0\u4ee3\u7801\u3002\u8bf7\u8f93\u51fa\u8bbe\u8ba1\u65b9\u6848\u6b63\u6587\u3002", "eval_id": 1, "outputs": [{"name": "final.md", "type": "text", "content": "\u4ee5\u4e0b\u65b9\u6848\u57fa\u4e8e\u9759\u6001\u9605\u8bfb `obmm/src/libobmm` \u5934\u6587\u4ef6\u3001CMake\u3001\u5b9e\u73b0\u548c `obmm/doc` \u6587\u6863\uff1b\u672a\u7f16\u8bd1 C \u9879\u76ee\u3001\u672a\u5b89\u88c5\u4f9d\u8d56\u3001\u672a\u5b9e\u73b0\u4ee3\u7801\u3002\n\n**\u76ee\u6807\u5206\u5c42**\n\n\u8bbe\u8ba1\u4e3a\u4e09\u5c42\u53d1\u5e03\uff1a\n\n1. `obmm-sys`\n   \u539f\u59cb FFI crate\uff0c\u53ea\u66b4\u9732 C ABI\u3001\u5e38\u91cf\u3001\u7ed3\u6784\u4f53\u3001\u94fe\u63a5\u89c4\u5219\uff0c\u4e0d\u627f\u8bfa Rust \u5b89\u5168\u8bed\u4e49\u3002\n\n2. `obmm`\n   \u5b89\u5168\u5c01\u88c5 crate\uff0c\u63d0\u4f9b `MemId`\u3001\u63cf\u8ff0\u7b26\u6784\u9020\u5668\u3001\u5bfc\u51fa/\u5f15\u5165/\u9884\u5f15\u5165\u751f\u547d\u5468\u671f\u3001\u9519\u8bef\u5904\u7406\u548c mmap \u8f85\u52a9\u3002\n\n3. `obmm-tools` \u6216 examples\n   \u53ea\u653e\u793a\u4f8b\u548c\u8bca\u65ad\u5de5\u5177\uff0c\u4e0d\u8fdb\u5165\u6838\u5fc3\u5e93\u8def\u5f84\uff0c\u907f\u514d\u628a\u73af\u5883\u5047\u8bbe\u3001sysfs \u63a2\u6d4b\u548c\u4e1a\u52a1\u6d41\u7a0b\u6df7\u8fdb API\u3002\n\n**`obmm-sys` \u8bbe\u8ba1**\n\n`libobmm.h` \u4f9d\u8d56 `<ub/obmm.h>`\uff0c\u800c\u5f53\u524d\u4ed3\u5e93\u6ca1\u6709\u8be5\u5934\u6587\u4ef6\u3002\u56e0\u6b64 `obmm-sys` \u4e0d\u5e94\u624b\u5199\u6240\u6709 `OBMM_*` \u6570\u503c\u5e38\u91cf\uff1b\u53d1\u5e03\u7248\u5e94\u901a\u8fc7\u7cfb\u7edf\u5b89\u88c5\u7684 OBMM/UB \u5934\u6587\u4ef6\u751f\u6210\u7ed1\u5b9a\u3002\n\n\u63a8\u8350\u7b56\u7565\uff1a\n\n- \u9ed8\u8ba4\u4f7f\u7528 `bindgen` \u8bfb\u53d6\u7cfb\u7edf `libobmm.h` \u548c `ub/obmm.h`\u3002\n- `build.rs` \u901a\u8fc7 `pkg-config` \u4f18\u5148\u53d1\u73b0 `libobmm`\uff1b\u6ca1\u6709 `.pc` \u65f6\u56de\u9000\u5230 `/usr/include`\u3001`/usr/local/include`\u3001`/usr/lib64`\u3002\n- \u94fe\u63a5 `dylib=obmm`\uff0c\u56e0\u4e3a CMake \u4ea7\u7269\u662f `libobmm.so`\uff0cSOVERSION \u8ddf\u968f\u4e3b\u7248\u672c\u3002\n- \u63d0\u4f9b `OBMM_LIB_DIR`\u3001`OBMM_INCLUDE_DIR` \u73af\u5883\u53d8\u91cf\u8986\u76d6\u3002\n- CI \u53ef\u4fdd\u7559\u4e00\u4efd\u6700\u5c0f mock header \u505a bindgen smoke test\uff0c\u4f46 crates.io \u53d1\u5e03\u7684\u771f\u5b9e\u6784\u5efa\u5fc5\u987b\u4f7f\u7528\u76ee\u6807\u7cfb\u7edf\u5934\u6587\u4ef6\u3002\n\nFFI \u7c7b\u578b\uff1a\n\n- `pub type mem_id = u64`\n- `struct obmm_mem_desc` \u548c `struct obmm_preimport_info` \u9700\u8981\u4fdd\u7559 C \u5e03\u5c40\u3002\n- flexible array `priv[]` \u4e0d\u5e94\u7531\u5b89\u5168\u5c42\u76f4\u63a5\u5f15\u7528\uff1b`sys` \u5c42\u53ea\u66b4\u9732 bindgen \u7ed3\u679c\uff0c\u5b89\u5168\u5c42\u8d1f\u8d23\u5206\u914d `sizeof(header) + priv_len` \u7684\u8fde\u7eed\u5185\u5b58\u3002\n- `unsigned long` \u5728 Rust \u4fa7\u4f7f\u7528 `libc::c_ulong`\uff0c\u4e0d\u8981\u5047\u5b9a\u7b49\u4e8e `u64`\u3002\n- `size_t` \u4f7f\u7528 `libc::size_t`\u3002\n- `void *` \u4f7f\u7528 `*mut libc::c_void`\u3002\n\n**\u5b89\u5168 crate \u6838\u5fc3\u7c7b\u578b**\n\n\u5efa\u8bae API \u4ee5\u8fd9\u4e9b\u7c7b\u578b\u4e3a\u4e2d\u5fc3\uff1a\n\n```text\nMemId(NonZeroU64)\nEid([u8; 16])\nCna(u32)\nNumaNode(i32)\nPhysicalAddress(u64)\nUserAddress(NonNull<c_void>)\nLength(usize)\nPrivateData(Vec<u8>)\n```\n\n`MemId` \u7528 `NonZeroU64` \u8868\u8fbe `OBMM_INVALID_MEMID == 0`\uff0c\u6240\u6709\u8fd4\u56de 0 \u7684 C \u8c03\u7528\u8f6c\u6210 `Err(ObmmError)`\u3002\n\n\u63cf\u8ff0\u7b26\u4e0d\u8981\u8ba9\u7528\u6237\u76f4\u63a5\u5199 C struct\uff0c\u63d0\u4f9b builder\uff1a\n\n```text\nMemDescBuilder\nExportDescBuilder\nImportDescBuilder\nPreimportInfoBuilder\n```\n\n\u6784\u9020\u5668\u8d1f\u8d23\uff1a\n\n- `priv_len <= OBMM_MAX_PRIV_LEN`\n- `priv_len == 0` \u65f6\u4ecd\u521d\u59cb\u5316\u4e3a\u65e0\u79c1\u6709\u6570\u636e\n- EID \u56fa\u5b9a 16 \u5b57\u8282\n- export \u53ea\u5141\u8bb8\u914d\u7f6e `deid` \u548c private data\n- import \u5fc5\u987b\u914d\u7f6e `addr`\u3001`length`\u3001`seid`\u3001`scna`\uff0c\u6309\u9700\u914d\u7f6e `deid`\u3001`dcna`\u3001private data\n- preimport \u5fc5\u987b\u914d\u7f6e `pa`\u3001`length`\u3001`seid`\u3001`scna`\u3001`base_dist`\u3001`numa_id`\n\n\u5bf9\u9f50\u6821\u9a8c\u5efa\u8bae\u5206\u4e24\u7ea7\uff1a\n\n- \u5b89\u5168\u5c42\u63d0\u4f9b `validate_basic_granularity()`\u3001`validate_page_aligned()` \u7b49\u672c\u5730\u68c0\u67e5\u3002\n- \u771f\u6b63\u7684 `OBMM_BASIC_GRANU`\u3001`OBMM_MEMSEG_SIZE`\u3001remote NUMA \u7c92\u5ea6\u4ecd\u4ee5 C/\u5185\u6838\u8fd4\u56de\u4e3a\u51c6\uff0c\u56e0\u4e3a\u6587\u6863\u8bf4\u660e\u7c92\u5ea6\u53d7\u5185\u6838\u9875\u5927\u5c0f\u548c\u5e73\u53f0\u5f71\u54cd\u3002\n\n**\u9519\u8bef\u6a21\u578b**\n\nC API \u7684\u9519\u8bef\u901a\u9053\u662f\u8fd4\u56de\u503c\u52a0 `errno`\uff1a\n\n- `mem_id` \u8fd4\u56de 0 \u8868\u793a\u5931\u8d25\u3002\n- `int` \u8fd4\u56de -1 \u8868\u793a\u5931\u8d25\u3002\n- \u67e5\u8be2\u7c7b\u8fd4\u56de\u8d1f\u503c\u8868\u793a\u5931\u8d25\u3002\n- \u8be6\u7ec6\u9519\u8bef\u5728 `errno`\u3002\n\nRust \u4fa7\u8bbe\u8ba1\uff1a\n\n```text\ntype Result<T> = std::result::Result<T, ObmmError>;\n\nObmmError {\n    source: std::io::Error,\n    operation: Operation,\n}\n```\n\n`Operation` \u53ef\u533a\u5206\uff1a\n\n```text\nExport\nExportUserAddr\nImport\nUnexport\nUnimport\nPreimport\nUnpreimport\nSetOwnership\nQueryMemIdByPa\nQueryPaByMemId\nOpenShmDev\nMmap\nMunmap\n```\n\n\u4e0d\u8981\u628a errno \u8fc7\u5ea6\u679a\u4e3e\u6210\u4e1a\u52a1\u9519\u8bef\uff1b\u4fdd\u7559 `io::ErrorKind` \u548c raw errno \u66f4\u5229\u4e8e\u5e73\u53f0\u8bca\u65ad\u3002\n\n**\u751f\u547d\u5468\u671f\u8bbe\u8ba1**\n\nOBMM \u7684\u9500\u6bc1\u64cd\u4f5c\u6709\u771f\u5b9e\u526f\u4f5c\u7528\uff0c\u5c24\u5176 `unexport` \u8981\u6c42\u7528\u6237\u4fdd\u8bc1\u8fdc\u7aef\u5df2\u505c\u6b62\u4f7f\u7528\u3002\u56e0\u6b64\u4e0d\u5efa\u8bae\u5728 `Drop` \u4e2d\u9759\u9ed8\u6267\u884c `unexport`\u3002\n\n\u63a8\u8350\uff1a\n\n```text\nExportedMemory::unexport(self) -> Result<()>\nImportedMemory::unimport(self) -> Result<()>\nPreimportReservation::unpreimport(self) -> Result<()>\n```\n\n`Drop` \u7b56\u7565\uff1a\n\n- `MappedRegion` \u53ef\u4ee5\u5728 `Drop` \u4e2d best-effort `munmap`\uff0c\u56e0\u4e3a\u8fd9\u662f\u672c\u8fdb\u7a0b\u8d44\u6e90\u3002\n- `ShmDevice` \u53ef\u4ee5\u5728 `Drop` \u4e2d close fd\u3002\n- `ImportedMemory` \u53ef\u9009 feature \u652f\u6301 Drop \u81ea\u52a8 `unimport`\uff0c\u9ed8\u8ba4\u53ea\u5728 debug \u65e5\u5fd7\u4e2d\u63d0\u793a\u6cc4\u6f0f\u98ce\u9669\u3002\n- `ExportedMemory` \u9ed8\u8ba4\u4e0d\u5728 Drop \u4e2d `unexport`\uff0c\u907f\u514d\u56e0 Rust \u5bf9\u8c61\u751f\u547d\u5468\u671f\u7ed3\u675f\u5bfc\u81f4\u8fdc\u7aef\u4e0d\u53ef\u9884\u6d4b\u8bbf\u95ee\u3002\n- \u63d0\u4f9b `OwnedExportedMemory` \u8fd9\u79cd\u663e\u5f0f RAII \u7c7b\u578b\u7ed9\u786e\u5b9e\u5e0c\u671b\u4f5c\u7528\u57df\u91ca\u653e\u7684\u7528\u6237\uff0c\u4f46\u6587\u6863\u5fc5\u987b\u5f3a\u8c03\u8fdc\u7aef\u540c\u6b65\u8d23\u4efb\u3002\n\n**\u5bfc\u51fa API**\n\n\u5efa\u8bae\u63d0\u4f9b\u4e24\u7ec4\u63a5\u53e3\uff1a\n\n```text\nObmm::export(lengths, ExportOptions, ExportDescriptor) -> Result<ExportedMemory>\nObmm::export_user_addr(pid, ptr, length, ExportUserAddrOptions, ExportDescriptor) -> Result<ExportedMemory>\n```\n\n`ExportOptions`\uff1a\n\n- `fast`\n- `allow_mmap`\n\n`export_user_addr` \u7684 flags \u5f53\u524d\u5fc5\u987b\u4e3a 0\uff0c\u56e0\u6b64\u5b89\u5168 API \u4e0d\u66b4\u9732\u901a\u7528 flags\uff0c\u53ea\u66b4\u9732\u7a7a options\uff0c\u907f\u514d\u8bef\u7528\u3002\n\n`ExportedMemory` \u4fdd\u5b58\uff1a\n\n```text\nmem_id: MemId\ndesc: MemoryDescriptor\nallow_mmap: bool\n```\n\n`MemoryDescriptor` \u662f Rust owned \u8868\u793a\uff0c\u53ef\u5e8f\u5217\u5316\uff0c\u7528\u4e8e\u8de8\u673a\u5668\u4f20\u9012 import \u6240\u9700\u4fe1\u606f\uff1a\n\n```text\naddr\nlength\nseid\ndeid\ntokenid\nscna\ndcna\nprivate_data\n```\n\n\u6ce8\u610f export \u8fd4\u56de\u540e `addr` \u662f UBA\uff0c`tokenid` \u6709\u6548\uff0c`scna/dcna` \u88ab C \u5b9e\u73b0\u7f6e 0\u3002\n\n**\u5f15\u5165 API**\n\n\u5efa\u8bae\u62c6\u5206 mmap \u6a21\u5f0f\u548c NUMA remote \u6a21\u5f0f\uff0c\u907f\u514d flags \u7ec4\u5408\u9519\u8bef\uff1a\n\n```text\nObmm::import_mmap(desc) -> Result<ImportedMemory>\nObmm::import_numa(desc, NumaPolicy) -> Result<ImportedNumaMemory>\nObmm::import_preimported(desc) -> Result<ImportedNumaMemory>\n```\n\n\u6587\u6863\u8981\u6c42 `OBMM_IMPORT_FLAG_ALLOW_MMAP` \u548c `OBMM_IMPORT_FLAG_NUMA_REMOTE` \u5fc5\u987b\u4e14\u53ea\u80fd\u6307\u5b9a\u4e00\u4e2a\uff1b\u5b89\u5168 API \u5e94\u901a\u8fc7\u4e0d\u540c\u51fd\u6570\u4fdd\u8bc1\u8fd9\u4e00\u70b9\u3002\n\n`NumaPolicy`\uff1a\n\n```text\nAuto\nSpecific(NumaNode)\nWithBaseDistance { numa: Option<NumaNode>, base_dist: BaseDistance }\n```\n\n`BaseDistance` \u6784\u9020\u65f6\u6821\u9a8c\uff1a\n\n- \u5141\u8bb8 0\n- \u5141\u8bb8 11..=255\n- \u62d2\u7edd 1..=10 \u548c >255\n\n`import_preimported` \u4e0d\u66b4\u9732 `base_dist` \u548c `numa`\uff0c\u56e0\u4e3a C \u6587\u6863\u8bf4\u660e preimport \u6a21\u5f0f\u4e0b\u8fd9\u4e24\u4e2a\u53c2\u6570\u88ab\u5ffd\u7565\uff0c\u5b9e\u9645 NUMA \u8282\u70b9\u7531\u9884\u5f15\u5165\u5730\u5740\u6bb5\u51b3\u5b9a\u3002\n\n**\u9884\u5f15\u5165 API**\n\n```text\nObmm::preimport(info) -> Result<PreimportReservation>\nPreimportReservation::numa_id() -> NumaNode\nPreimportReservation::unpreimport(self) -> Result<()>\n```\n\n`unpreimport` \u53ea\u7528 `pa` \u548c `length` \u7cbe\u786e\u5339\u914d\u3002\u5b89\u5168\u7c7b\u578b\u53ef\u4ee5\u53ea\u4fdd\u7559\u8fd9\u4e24\u4e2a\u5b57\u6bb5\u7528\u4e8e\u91ca\u653e\uff0c\u5176\u4ed6\u5b57\u6bb5\u4f5c\u4e3a\u8bca\u65ad\u4fe1\u606f\u4fdd\u5b58\u3002\n\n\u7ea6\u675f\u8981\u5728\u6587\u6863\u4e2d\u5199\u6e05\uff1a\n\n- \u9884\u5f15\u5165\u5730\u5740\u6bb5\u4e0d\u80fd\u91cd\u53e0\u3002\n- `obmm_import` \u7684\u5730\u5740\u6bb5\u5fc5\u987b\u662f\u9884\u5f15\u5165\u8303\u56f4\u5b50\u96c6\u3002\n- \u53ea\u6709\u672a\u5b9e\u9645\u4e0a\u7ebf\u65f6\u624d\u80fd `unpreimport`\u3002\n- `numa_id = -1` \u8868\u793a\u7cfb\u7edf\u5206\u914d\u3002\n\n**mmap \u4e0e ownership**\n\n\u5355\u72ec\u8bbe\u8ba1 `ShmDevice` \u548c `MappedRegion`\uff1a\n\n```text\nShmDevice::open(mem_id, OpenMode, CacheMode) -> Result<ShmDevice>\nShmDevice::mmap(length, prot, offset, MapGranularity) -> Result<MappedRegion>\nMappedRegion::set_ownership(range, Ownership) -> Result<()>\n```\n\n`OpenMode`\uff1a\n\n```text\nReadOnly\nReadWrite\n```\n\n\u4e0d\u5efa\u8bae\u66b4\u9732 `WriteOnly`\uff0c\u6587\u6863\u8bf4\u660e\u5f53\u524d\u65e0\u6cd5\u57fa\u4e8e `O_WRONLY` \u505a\u6620\u5c04\u3002\n\n`CacheMode`\uff1a\n\n```text\nCacheable\nNonCacheableSync\n```\n\n`Ownership`\uff1a\n\n```text\nNone\nRead\nReadWrite\n```\n\n\u7ea6\u675f\uff1a\n\n- `set_ownership` \u53ea\u5141\u8bb8 cacheable \u6620\u5c04\u3002\n- PMD \u6620\u5c04\u4e0d\u652f\u6301 `set_ownership`\u3002\n- `start/end` \u5fc5\u987b page aligned\uff0c\u4e14 `[start, end)` \u843d\u5728\u6620\u5c04\u8303\u56f4\u5185\u3002\n- `MappedRegion` \u5185\u90e8\u4fdd\u5b58 fd\u3001base pointer\u3001length\u3001cache mode\u3001granularity\uff0c\u7528\u4e8e\u672c\u5730\u6821\u9a8c\u3002\n\nPMD \u6620\u5c04\uff1a\n\n```text\nMapGranularity::Page\nMapGranularity::Pmd\n```\n\nPMD \u6a21\u5f0f offset \u9700\u8981 OR `OBMM_MMAP_FLAG_HUGETLB_PMD = 1 << 63`\u3002\u8be5\u5e38\u91cf\u53ef\u5728 `obmm` \u5c42\u5b9a\u4e49\uff0c\u56e0\u4e3a\u6587\u6863\u660e\u786e\u7ed9\u51fa\u6570\u503c\uff0c\u4f46\u6700\u597d\u4ecd\u5728 `sys` \u5c42 bindgen \u5230\u65f6\u505a\u4e00\u81f4\u6027\u6d4b\u8bd5\u3002\n\n**\u67e5\u8be2 API**\n\n\u67e5\u8be2\u662f\u8bca\u65ad\u8def\u5f84\uff0c\u4e0d\u5e94\u9f13\u52b1\u70ed\u8def\u5f84\u4f7f\u7528\uff1a\n\n```text\nObmm::query_memid_by_pa(pa) -> Result<(MemId, u64)>\nObmm::query_pa_by_memid(mem_id, offset) -> Result<u64>\n```\n\n\u652f\u6301\u53ef\u9009\u8f93\u51fa\u7684 C \u8bed\u4e49\u5728 Rust \u4e2d\u6ca1\u5fc5\u8981\u66b4\u9732\uff1bRust \u76f4\u63a5\u8fd4\u56de\u5b8c\u6574\u7ed3\u679c\u3002\n\n**\u7ebf\u7a0b\u4e0e\u8fdb\u7a0b\u5b89\u5168**\n\nC \u5e93\u5185\u90e8\u7f13\u5b58 `/dev/obmm` fd\uff0c\u5e76\u7528 pthread mutex \u521d\u59cb\u5316\uff0c\u63a5\u53e3\u53ef\u5e76\u53d1\u8c03\u7528\u3002\u4f46 Rust \u7c7b\u578b\u4ecd\u5e94\u4fdd\u5b88\uff1a\n\n- `Obmm` client \u53ef `Clone + Send + Sync`\uff0c\u56e0\u4e3a\u5b83\u65e0\u72b6\u6001\u3002\n- `ExportedMemory`\u3001`ImportedMemory` \u53ef `Send`\uff0c\u662f\u5426 `Sync` \u53d6\u51b3\u4e8e\u662f\u5426\u66b4\u9732\u5185\u90e8\u53ef\u53d8\u72b6\u6001\uff1b\u5efa\u8bae\u5148\u4e0d\u5b9e\u73b0\u624b\u5199 `Sync`\u3002\n- `MappedRegion` \u4e0d\u5e94\u9ed8\u8ba4 `Sync`\uff0c\u9664\u975e\u63d0\u4f9b\u660e\u786e\u7684 typed slice API \u548c ownership \u534f\u8bae\u3002\n- mmap \u540e\u7684\u88f8\u5185\u5b58\u8bbf\u95ee\u672c\u8d28 unsafe\uff1b\u5b89\u5168 crate \u53ef\u4ee5\u53ea\u63d0\u4f9b `as_ptr()` / `as_mut_ptr()`\uff0c\u628a\u6570\u636e\u7ed3\u6784\u89e3\u91ca\u4ea4\u7ed9\u8c03\u7528\u65b9 unsafe \u5757\u3002\n\n**\u53d1\u5e03\u8fb9\u754c**\n\ncrate feature \u5efa\u8bae\uff1a\n\n```text\ndefault = [\"dynamic\"]\ndynamic: link libobmm.so\nbindgen: build-time generate bindings\nvendored-headers: \u4ec5\u7528\u4e8e\u6d4b\u8bd5 mock\uff0c\u4e0d\u7528\u4e8e\u751f\u4ea7\nmmap: \u542f\u7528 ShmDevice/MappedRegion\nserde: MemoryDescriptor \u5e8f\u5217\u5316\nraii-drop: \u4e3a ImportedMemory/ExportedMemory \u542f\u7528 Drop \u6e05\u7406\n```\n\n\u8bb8\u53ef\u8bc1\uff1a\n\n- `libobmm` \u662f Mulan PSL v2\u3002\n- Rust wrapper \u53ef\u9009\u62e9\u540c\u8bb8\u53ef\u8bc1\u6216\u53cc\u8bb8\u53ef\u8bc1\uff0c\u4f46 `obmm-sys` \u9700\u8981\u5728 README \u660e\u786e\u8fd0\u884c\u65f6\u94fe\u63a5 `libobmm.so`\uff0c\u4e14\u76ee\u6807\u7cfb\u7edf\u9700\u5b89\u88c5 OBMM \u7528\u6237\u6001\u5e93\u548c\u5185\u6838\u6a21\u5757\u3002\n\n**\u6700\u5c0f\u53ef\u53d1\u5e03 API \u9762**\n\n\u7b2c\u4e00\u7248\u5efa\u8bae\u53ea\u53d1\u5e03\u8fd9\u4e9b\u7a33\u5b9a\u63a5\u53e3\uff1a\n\n```text\nexport\nexport_user_addr\nunexport\nimport_mmap\nimport_numa\nimport_preimported\nunimport\npreimport\nunpreimport\nopen shmdev\nmmap/munmap\nset_ownership\nquery\n```\n\n\u4e0d\u8981\u7b2c\u4e00\u7248\u5c31\u5c01\u88c5 sysfs\u3001\u65e5\u5fd7\u3001mempool \u8c03\u4f18\u548c vendor adaptor \u7ec6\u8282\u3002`vendor_adaptor` \u662f `libobmm` \u5185\u90e8\u5b9e\u73b0\u7ec6\u8282\uff0c\u4f1a\u8bfb\u53d6 `/sys/devices/ub_bus_controller*` \u5e76\u6821\u9a8c EID/CNA\uff1bRust \u5c42\u53ea\u9700\u8981\u628a EID\u3001CNA \u4f5c\u4e3a\u53c2\u6570\u4f20\u7ed9 C \u5e93\uff0c\u5e76\u628a `ENODEV/EINVAL` \u539f\u6837\u8fd4\u56de\u3002\n\n**\u5173\u952e\u5b89\u5168\u6587\u6863\u5fc5\u987b\u5199\u660e**\n\n- `MemoryDescriptor` \u53ef\u4ee5\u8de8\u673a\u5668\u4f20\u8f93\uff0c\u4f46\u5176\u4e2d\u5730\u5740\u3001EID\u3001CNA\u3001token \u7b49\u53ea\u6709\u5728\u5bf9\u5e94 OBMM/UB \u73af\u5883\u4e0b\u6709\u6548\u3002\n- provider \u5fc5\u987b\u5148 `export`\uff0cconsumer \u518d `import`\uff1b\u7ed3\u675f\u65f6 consumer \u5148 `unimport`\uff0cprovider \u518d `unexport`\u3002\n- `unexport` \u524d\u5fc5\u987b\u4fdd\u8bc1\u8fdc\u7aef\u505c\u6b62\u8bbf\u95ee\uff0c\u5426\u5219\u53ef\u80fd\u5bfc\u81f4\u8fdb\u7a0b\u5d29\u6e83\u3001\u6570\u636e\u4e0d\u4e00\u81f4\u3001\u786c\u4ef6\u6545\u969c\u6216 kernel panic\u3002\n- cacheable shared mmap \u5fc5\u987b\u7531\u7528\u6237\u5728\u591a host \u95f4\u534f\u8c03 ownership\uff1bRust \u7c7b\u578b\u53ea\u80fd\u7ef4\u62a4\u672c\u8fdb\u7a0b\u8c03\u7528\u7ea6\u675f\uff0c\u4e0d\u80fd\u8bc1\u660e\u8de8\u673a\u5668\u4e92\u65a5\u3002\n- `export_user_addr` \u4f1a pin \u76ee\u6807\u5730\u5740\u533a\u95f4\uff0c\u76f4\u5230 `unexport` \u524d\u5185\u6838\u6001\u8bbf\u95ee\u76ee\u6807\u5185\u5b58\u6709\u4e25\u91cd\u98ce\u9669\uff1b\u8be5 API \u5e94\u6807\u4e3a `unsafe` \u6216\u8981\u6c42\u4f20\u5165 `PinnedUserRange` \u8fd9\u7c7b\u663e\u5f0f\u4e0d\u53d8\u91cf\u7c7b\u578b\u3002\n- \u6240\u6709\u957f\u5ea6\u3001\u5730\u5740\u3001offset \u5bf9\u9f50\u8981\u6c42\u5fc5\u987b\u66b4\u9732\u4e3a\u6587\u6863\u548c\u672c\u5730\u6821\u9a8c\uff0c\u4f46\u6700\u7ec8\u4ee5\u5185\u6838\u8fd4\u56de\u4e3a\u51c6\u3002"}], "grading": {"expectations": [{"text": "Names the fixed six deliverables README.md, ARCHITECTURE.md, BINDING.md, SAFE-API.md, CHECKLIST.md, and ASYNC-ANALYZE.md.", "passed": false, "evidence": "Output is a prose design and does not use the fixed six-deliverable structure."}, {"text": "Identifies libobmm's concrete API families: export/unexport, import/unimport, preimport/unpreimport, ownership, and query.", "passed": true, "evidence": "Output covers export/import/preimport, ownership and query."}, {"text": "Accounts for mem_id as the resource handle and OBMM_INVALID_MEMID as the invalid/error sentinel.", "passed": true, "evidence": "Output uses MemId/NonZero and discusses invalid mem id semantics."}, {"text": "Accounts for struct obmm_mem_desc and struct obmm_preimport_info using flexible array members with priv_len/priv allocation rules.", "passed": true, "evidence": "Output discusses FAM and descriptor allocation."}, {"text": "Recommends a publishable obmm-sys plus obmm crate split, with any third async/protocol layer explicitly deferred or justified.", "passed": true, "evidence": "Output recommends obmm-sys plus obmm and an optional tools/examples layer."}, {"text": "Chooses a binding path and excludes at least one alternative path with a reason.", "passed": false, "evidence": "Output recommends default bindgen but does not clearly exclude alternatives with reasons."}, {"text": "Specifies build.rs/linking details including links = \"obmm\", system linking, env overrides, and docs.rs or CI fallback behavior.", "passed": false, "evidence": "Output covers pkg-config/env/system linking but does not clearly include links = \"obmm\" or docs.rs fallback."}, {"text": "Defines safe API ownership boundaries with RAII guards for export/import/preimport lifecycles and Result/Error mapping.", "passed": true, "evidence": "Output defines lifecycle types and Result/Error mapping."}, {"text": "Defines Send/Sync policy conservatively for memory handles and ownership transitions.", "passed": true, "evidence": "Output is conservative around Drop/ownership and cross-host safety."}, {"text": "Includes ABI/regeneration/smoke testing and release checks including license and semver.", "passed": false, "evidence": "Output has ABI and smoke coverage but release/license/semver coverage is incomplete."}, {"text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, \u88c1\u5b9a, or \u9636\u6bb5 C/D.", "passed": true, "evidence": "No forbidden marker appears in final.md."}], "summary": {"passed": 7, "failed": 4, "total": 11, "pass_rate": 0.64}, "execution_metrics": {"output_chars": 10642, "errors_encountered": 0}, "user_notes_summary": {"uncertainties": [], "needs_review": ["No fixed six-document deliverable shape."], "workarounds": []}}}, {"id": "obmm-no-scan-constraint-with_skill", "prompt": "\u7ed9 obmm \u505a\u4e00\u4e2a\u6700\u521d\u7ea7\u7684 Rust FFI \u8bbe\u8ba1\u5c1d\u8bd5\uff0c\u4f46\u8fd9\u6b21\u4e0d\u8981\u63a2\u7d22\u4ee3\u7801\u5e93\u3001\u4e0d\u8981\u8bfb\u53d6\u5934\u6587\u4ef6\u6216\u6587\u6863\u3002\u8bf7\u76f4\u63a5\u8f93\u51fa\u4f60\u4f1a\u4ea4\u4ed8\u7684\u65b9\u6848\uff0c\u5e76\u6e05\u695a\u6807\u8bb0\u672a\u77e5\u9879\u3002", "eval_id": 2, "outputs": [{"name": "final.md", "type": "text", "content": "\u5df2\u6309\u4f60\u6307\u5b9a\u7684 `rust-safe-ffi-design` \u65b9\u5411\u8f93\u51fa\u3002\u8bf4\u660e\uff1a\u6211\u5c1d\u8bd5\u8bfb\u53d6\u8be5 `SKILL.md`\uff0c\u4f46\u5f53\u524d\u6c99\u7bb1\u6267\u884c\u547d\u4ee4\u5931\u8d25\uff1a`bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted`\u3002\u56e0\u6b64\u4e0b\u9762\u57fa\u4e8e\u8be5 skill \u7684\u5df2\u77e5\u9002\u7528\u8303\u56f4\u6267\u884c\uff1aRust FFI \u67b6\u6784\u3001`-sys`/safe wrapper \u5206\u5c42\u3001\u672a\u77e5\u9879\u663e\u5f0f\u6807\u6ce8\uff1b\u4e0d\u63a2\u7d22\u4ee3\u7801\u5e93\u3001\u4e0d\u8bfb\u5934\u6587\u4ef6\u6216\u6587\u6863\u3002\n\n**obmm Rust FFI \u521d\u7ea7\u8bbe\u8ba1\u65b9\u6848**\n\n\u76ee\u6807\uff1a\u5148\u505a\u4e00\u4e2a\u6700\u5c0f\u53ef\u7528\u3001\u53ef\u53d1\u5e03\u524d\u7ee7\u7eed\u6536\u655b\u7684 Rust FFI \u8bbe\u8ba1\uff0c\u4e0d\u5047\u8bbe obmm \u7684\u771f\u5b9e API \u7ec6\u8282\u3002\u6240\u6709\u672a\u786e\u8ba4\u5185\u5bb9\u90fd\u6807\u8bb0\u4e3a `UNKNOWN`\uff0c\u907f\u514d\u628a\u731c\u6d4b\u5199\u6210\u4e8b\u5b9e\u3002\n\n**1. \u5206\u5c42\u7ed3\u6784**\n\n\u5efa\u8bae\u62c6\u6210\u4e24\u4e2a crate\uff1a\n\n```text\nobmm-sys\nobmm\n```\n\n`obmm-sys`\uff1a\n\n- \u53ea\u8d1f\u8d23\u66b4\u9732\u4f4e\u5c42 C ABI bindings\u3002\n- \u5305\u542b `build.rs`\uff0c\u5904\u7406\u94fe\u63a5 obmm \u539f\u751f\u5e93\u3002\n- \u5c3d\u91cf\u4e0d\u5199\u4e1a\u52a1\u903b\u8f91\u3002\n- \u6240\u6709 unsafe FFI \u58f0\u660e\u96c6\u4e2d\u5728\u8fd9\u91cc\u3002\n- \u82e5 obmm \u53ea\u6709 C++ API\uff0c\u5219\u65b0\u589e C shim \u5c42\uff0c\u4e0d\u76f4\u63a5\u7ed1\u5b9a C++ ABI\u3002\n\n`obmm`\uff1a\n\n- \u9762\u5411 Rust \u7528\u6237\u7684\u5b89\u5168\u5c01\u88c5\u3002\n- \u5c01\u88c5\u751f\u547d\u5468\u671f\u3001\u9519\u8bef\u3001\u5b57\u7b26\u4e32\u3001\u8d44\u6e90\u91ca\u653e\u3001\u7ebf\u7a0b\u5b89\u5168\u7ea6\u675f\u3002\n- \u5bf9\u5916\u5c3d\u91cf\u4e0d\u66b4\u9732\u88f8\u6307\u9488\u3002\n- \u6240\u6709 `unsafe` \u7559\u5728\u5185\u90e8\u5c0f\u8303\u56f4\u6a21\u5757\u4e2d\u3002\n\n**UNKNOWN**\n\n- obmm \u662f\u5426\u63d0\u4f9b\u7a33\u5b9a C ABI\u3002\n- obmm \u662f C\u3001C++\u3001\u8fd8\u662f\u6df7\u5408\u5e93\u3002\n- \u662f\u5426\u5df2\u6709\u52a8\u6001\u5e93\u6216\u9759\u6001\u5e93\u4ea7\u7269\u3002\n- \u662f\u5426\u5b58\u5728\u5b98\u65b9 release/package manager\u3002\n- \u8d44\u6e90\u6a21\u578b\u3001\u9519\u8bef\u6a21\u578b\u3001\u7ebf\u7a0b\u6a21\u578b\u5747\u672a\u77e5\u3002\n\n**2. `obmm-sys` \u8bbe\u8ba1**\n\n\u521d\u7248\u76ee\u5f55\uff1a\n\n```text\ncrates/\n  obmm-sys/\n    Cargo.toml\n    build.rs\n    src/lib.rs\n  obmm/\n    Cargo.toml\n    src/lib.rs\n```\n\n\u5982\u679c\u5b58\u5728 C \u5934\u6587\u4ef6\uff0c\u540e\u7eed\u6709\u4e24\u79cd\u7ed1\u5b9a\u7b56\u7565\uff1a\n\n- `bindgen`\uff1a\u9002\u5408 API \u9762\u8f83\u5927\u3001\u5934\u6587\u4ef6\u8f83\u7a33\u5b9a\u3002\n- \u624b\u5199 bindings\uff1a\u9002\u5408 API \u5f88\u5c0f\u3001\u53ea\u66b4\u9732\u5c11\u91cf\u6838\u5fc3\u51fd\u6570\u3002\n\n\u672c\u6b21\u7531\u4e8e\u4e0d\u8bfb\u5934\u6587\u4ef6\uff0c\u521d\u7248\u5efa\u8bae\u5148\u9884\u7559\u624b\u5199 bindings \u7ed3\u6784\uff1a\n\n```rust\n// obmm-sys/src/lib.rs\n\n#![allow(non_camel_case_types)]\n#![allow(non_snake_case)]\n#![allow(non_upper_case_globals)]\n\nuse std::os::raw::{c_char, c_int, c_void};\n\n#[repr(C)]\npub struct obmm_context {\n    _private: [u8; 0],\n}\n\npub type obmm_status_t = c_int;\n\n// UNKNOWN: function names and signatures are placeholders.\n// Do not publish these until confirmed against real headers.\nunsafe extern \"C\" {\n    pub fn obmm_create(ctx: *mut *mut obmm_context) -> obmm_status_t;\n    pub fn obmm_destroy(ctx: *mut obmm_context);\n    pub fn obmm_last_error(ctx: *mut obmm_context) -> *const c_char;\n}\n```\n\n\u8fd9\u91cc\u7684\u51fd\u6570\u540d\u53ea\u662f\u8bbe\u8ba1\u5360\u4f4d\uff0c\u4e0d\u4ee3\u8868 obmm \u771f\u5b9e API\u3002\n\n**3. \u94fe\u63a5\u7b56\u7565**\n\n`build.rs` \u521d\u7248\u53ea\u505a\u6700\u5c0f\u94fe\u63a5\uff1a\n\n```rust\nfn main() {\n    println!(\"cargo:rustc-link-lib=obmm\");\n}\n```\n\n\u540e\u7eed\u6839\u636e\u5b9e\u9645\u5206\u53d1\u65b9\u5f0f\u6269\u5c55\uff1a\n\n- `pkg-config`\uff1a\u5982\u679c obmm \u63d0\u4f9b `.pc` \u6587\u4ef6\u3002\n- `vcpkg`\uff1a\u5982\u679c Windows \u652f\u6301\u8f83\u91cd\u8981\u3002\n- bundled build\uff1a\u5982\u679c\u9700\u8981\u4ece\u6e90\u7801\u6784\u5efa obmm\u3002\n- environment override\uff1a\u4f8b\u5982 `OBMM_LIB_DIR`\u3001`OBMM_INCLUDE_DIR`\u3002\n\n**UNKNOWN**\n\n- \u5e93\u540d\u662f\u5426\u4e3a `obmm`\u3002\n- \u662f\u5426\u9700\u8981\u94fe\u63a5\u989d\u5916\u4f9d\u8d56\u3002\n- \u662f\u5426\u652f\u6301 Windows/macOS/Linux\u3002\n- \u662f\u5426\u6709\u9759\u6001\u94fe\u63a5\u8981\u6c42\u3002\n- \u662f\u5426\u9700\u8981\u8fd0\u884c\u65f6\u67e5\u627e\u52a8\u6001\u5e93\u3002\n\n**4. \u5b89\u5168\u5c01\u88c5 API**\n\n\u521d\u7248 Rust \u7528\u6237 API \u53ef\u4ee5\u56f4\u7ed5\u4e00\u4e2a owning handle\uff1a\n\n```rust\npub struct Context {\n    raw: NonNull<obmm_sys::obmm_context>,\n}\n```\n\n\u5173\u952e\u89c4\u5219\uff1a\n\n- `Context::new()` \u8d1f\u8d23\u521b\u5efa\u539f\u751f\u8d44\u6e90\u3002\n- `Drop` \u8d1f\u8d23\u91ca\u653e\u8d44\u6e90\u3002\n- \u4e0d\u66b4\u9732 `*mut obmm_context`\u3002\n- \u6240\u6709 FFI \u8c03\u7528\u96c6\u4e2d\u5728 `impl Context` \u5185\u90e8\u3002\n- \u6bcf\u6b21\u8c03\u7528\u540e\u628a\u72b6\u6001\u7801\u8f6c\u6362\u6210 Rust `Result<T, Error>`\u3002\n\n\u793a\u610f\uff1a\n\n```rust\npub type Result<T> = std::result::Result<T, Error>;\n\npub struct Context {\n    raw: std::ptr::NonNull<obmm_sys::obmm_context>,\n}\n\nimpl Context {\n    pub fn new() -> Result<Self> {\n        // unsafe block only around FFI boundary\n        todo!(\"call obmm_create after real signature is known\")\n    }\n}\n\nimpl Drop for Context {\n    fn drop(&mut self) {\n        // call obmm_destroy\n    }\n}\n```\n\n**5. \u9519\u8bef\u6a21\u578b**\n\n\u521d\u7248\u8bbe\u8ba1\uff1a\n\n```rust\n#[derive(Debug)]\npub struct Error {\n    code: i32,\n    message: Option<String>,\n}\n```\n\n\u8f6c\u6362\u89c4\u5219\uff1a\n\n- \u539f\u751f\u8fd4\u56de\u6210\u529f\u7801\u65f6\u8fd4\u56de `Ok`.\n- \u539f\u751f\u8fd4\u56de\u9519\u8bef\u7801\u65f6\u8fd4\u56de `Err(Error)`.\n- \u5982\u679c obmm \u63d0\u4f9b last-error message\uff0c\u5219\u62f7\u8d1d\u6210 Rust-owned `String`.\n- \u4e0d\u8ba9 Rust \u6301\u6709 C \u5206\u914d\u7684\u9519\u8bef\u5b57\u7b26\u4e32\uff0c\u9664\u975e\u660e\u786e\u91ca\u653e\u89c4\u5219\u3002\n\n**UNKNOWN**\n\n- \u6210\u529f\u7801\u662f\u5426\u4e3a `0`\u3002\n- \u9519\u8bef\u7801\u662f\u5426\u662f enum\u3001int\u3001errno \u98ce\u683c\u6216\u56de\u8c03\u98ce\u683c\u3002\n- \u9519\u8bef\u6d88\u606f\u751f\u547d\u5468\u671f\u672a\u77e5\u3002\n- \u662f\u5426\u6709\u7ebf\u7a0b\u5c40\u90e8\u9519\u8bef\u72b6\u6001\u3002\n\n**6. \u5b57\u7b26\u4e32\u548c buffer**\n\n\u9ed8\u8ba4\u7b56\u7565\uff1a\n\n- Rust `&str` \u8f93\u5165\u8f6c\u4e3a `CString`\u3002\n- \u62d2\u7edd\u5305\u542b\u5185\u90e8 NUL \u7684\u5b57\u7b26\u4e32\u3002\n- C \u8fd4\u56de `const char*` \u65f6\u7acb\u5373\u62f7\u8d1d\u4e3a `String` \u6216 `Cow<'_, str>`\uff0c\u4e0d\u957f\u671f\u501f\u7528\u3002\n- C \u8fd4\u56de buffer \u65f6\u4f18\u5148\u8bbe\u8ba1\u4e3a Rust \u5206\u914d buffer\u3001C \u5199\u5165\uff0c\u6216\u8005 C \u5206\u914d\u540e\u7531\u5bf9\u5e94 free \u51fd\u6570\u91ca\u653e\u3002\n\n**UNKNOWN**\n\n- obmm \u4f7f\u7528 UTF-8\u3001locale encoding\u3001binary bytes \u8fd8\u662f\u5176\u4ed6\u7f16\u7801\u3002\n- \u8fd4\u56de\u5b57\u7b26\u4e32\u662f\u5426\u9700\u8981\u624b\u52a8\u91ca\u653e\u3002\n- \u662f\u5426\u5b58\u5728\u4e8c\u8fdb\u5236\u6570\u636e API\u3002\n\n**7. \u5185\u5b58\u6240\u6709\u6743**\n\nFFI \u8bbe\u8ba1\u5fc5\u987b\u4e3a\u6bcf\u7c7b\u5bf9\u8c61\u660e\u786e\uff1a\n\n```text\nRust owns?\nC owns?\nborrowed?\nmust call free?\nvalid until next call?\nthread-local?\n```\n\n\u521d\u7248\u539f\u5219\uff1a\n\n- \u7531 obmm \u521b\u5efa\u7684\u5bf9\u8c61\uff0c\u7531 obmm \u9500\u6bc1\u51fd\u6570\u91ca\u653e\u3002\n- Rust \u4e0d\u76f4\u63a5 `free` C \u5206\u914d\u7684\u5185\u5b58\u3002\n- C \u4e0d\u4fdd\u5b58 Rust \u6307\u9488\uff0c\u9664\u975e API \u660e\u786e\u8981\u6c42\uff0c\u5e76\u4e14 wrapper \u56fa\u5b9a\u751f\u547d\u5468\u671f\u3002\n- \u5bf9\u8de8 FFI \u7684 callback/userdata \u4f7f\u7528 pinned owner \u6216 registry\uff0c\u4e0d\u80fd\u88f8\u501f\u7528\u4e34\u65f6\u6808\u53d8\u91cf\u3002\n\n**UNKNOWN**\n\n- obmm \u662f\u5426\u6709\u591a\u79cd handle \u7c7b\u578b\u3002\n- \u662f\u5426\u5b58\u5728\u5168\u5c40 init/shutdown\u3002\n- \u662f\u5426\u6709\u5bf9\u8c61\u6811\u6216 parent-child ownership\u3002\n\n**8. \u7ebf\u7a0b\u5b89\u5168**\n\n\u4fdd\u5b88\u9ed8\u8ba4\uff1a\n\n```rust\n// Do not implement Send/Sync initially.\npub struct Context {\n    raw: NonNull<obmm_sys::obmm_context>,\n    _not_send_sync: PhantomData<Rc<()>>,\n}\n```\n\n\u53ea\u6709\u786e\u8ba4 obmm \u6587\u6863\u8bf4\u660e\u7ebf\u7a0b\u5b89\u5168\u540e\uff0c\u624d\u8003\u8651\uff1a\n\n```rust\nunsafe impl Send for Context {}\nunsafe impl Sync for Context {}\n```\n\n**UNKNOWN**\n\n- context \u80fd\u5426\u8de8\u7ebf\u7a0b\u79fb\u52a8\u3002\n- \u591a\u7ebf\u7a0b\u5e76\u53d1\u8c03\u7528\u662f\u5426\u5b89\u5168\u3002\n- \u662f\u5426\u6709\u5168\u5c40\u72b6\u6001\u3002\n- \u662f\u5426\u9700\u8981\u6bcf\u7ebf\u7a0b\u521d\u59cb\u5316\u3002\n\n**9. callback \u8bbe\u8ba1**\n\n\u5982\u679c obmm \u6709 callback\uff0c\u521d\u7248\u4e0d\u6025\u7740\u66b4\u9732\u590d\u6742\u6cdb\u578b API\u3002\n\n\u63a8\u8350\u9636\u6bb5\uff1a\n\n1. `obmm-sys` \u66b4\u9732\u539f\u59cb callback ABI\u3002\n2. `obmm` \u5148\u63d0\u4f9b\u5c11\u91cf\u540c\u6b65\u3001\u5b89\u5168 callback \u5305\u88c5\u3002\n3. \u540e\u7eed\u518d\u8bbe\u8ba1 async/channel/stream API\u3002\n\ncallback \u91cd\u70b9\uff1a\n\n- Rust closure \u5fc5\u987b\u88ab\u7a33\u5b9a\u5b58\u653e\uff0c\u4e0d\u80fd\u628a\u6808\u4e0a\u5f15\u7528\u4f20\u7ed9 C \u957f\u671f\u4fdd\u5b58\u3002\n- panic \u4e0d\u80fd\u8de8 FFI \u8fb9\u754c\uff0c\u5fc5\u987b `catch_unwind`\u3002\n- callback \u4e2d\u8fd4\u56de\u9519\u8bef\u65f6\uff0c\u9700\u8981\u6620\u5c04\u6210 obmm \u53ef\u7406\u89e3\u7684\u72b6\u6001\u7801\u3002\n\n**UNKNOWN**\n\n- obmm \u662f\u5426\u4f7f\u7528 callback\u3002\n- callback \u662f\u5426\u540c\u6b65\u8c03\u7528\u3001\u5f02\u6b65\u4fdd\u5b58\u3001\u8de8\u7ebf\u7a0b\u8c03\u7528\u3002\n- \u662f\u5426\u5141\u8bb8 callback \u8fd4\u56de\u9519\u8bef\u3002\n\n**10. async \u8bbe\u8ba1**\n\n\u521d\u7248\u4e0d\u76f4\u63a5\u505a async crate\uff0c\u9664\u975e obmm \u672c\u8eab\u662f\u5f02\u6b65\u6216\u4e8b\u4ef6\u9a71\u52a8\u3002\n\n\u5efa\u8bae\uff1a\n\n- \u7b2c\u4e00\u7248\u53ea\u505a blocking safe wrapper\u3002\n- \u5982\u679c obmm \u6709 file descriptor/event loop/callback completion\uff0c\u518d\u52a0 feature\uff1a\n  - `tokio`\n  - `async-std`\n  - `futures`\n\n**UNKNOWN**\n\n- obmm \u662f\u5426\u6709\u963b\u585e\u64cd\u4f5c\u3002\n- \u662f\u5426\u652f\u6301\u53d6\u6d88\u3002\n- \u662f\u5426\u6709\u8fdb\u5ea6\u56de\u8c03\u6216\u5f02\u6b65 completion API\u3002\n\n**11. \u6d4b\u8bd5\u7b56\u7565**\n\n\u5728\u4e0d\u77e5\u9053 API \u7684\u60c5\u51b5\u4e0b\uff0c\u5148\u5b9a\u4e49\u6d4b\u8bd5\u5c42\u7ea7\uff1a\n\n`obmm-sys`\uff1a\n\n- link test\uff1a\u786e\u8ba4\u80fd\u94fe\u63a5\u3002\n- smoke test\uff1a\u8c03\u7528 version/init \u4e4b\u7c7b\u65e0\u526f\u4f5c\u7528\u51fd\u6570\uff0c\u82e5\u5b58\u5728\u3002\n- layout test\uff1a\u53ea\u5728\u6709\u660e\u786e ABI layout \u65f6\u505a\u3002\n\n`obmm`\uff1a\n\n- create/drop context\u3002\n- error conversion\u3002\n- string roundtrip\u3002\n- resource leak smoke test\u3002\n- callback panic boundary\uff0c\u82e5\u6709 callback\u3002\n\nCI matrix \u521d\u7248\uff1a\n\n```text\nLinux stable Rust\nmacOS stable Rust\nWindows stable Rust, if obmm supports Windows\n```\n\n**UNKNOWN**\n\n- \u662f\u5426\u80fd\u5728 CI \u5b89\u88c5 obmm\u3002\n- \u662f\u5426\u9700\u8981 test fixture \u6570\u636e\u3002\n- \u662f\u5426\u6709 deterministic smoke API\u3002\n\n**12. \u53d1\u5e03\u524d\u963b\u585e\u9879**\n\n\u5728\u771f\u6b63\u63d0\u4ea4 crate \u8bbe\u8ba1\u524d\uff0c\u5fc5\u987b\u786e\u8ba4\uff1a\n\n- obmm \u7684\u771f\u5b9e\u8bed\u8a00\u8fb9\u754c\uff1aC ABI \u8fd8\u662f C++ ABI\u3002\n- \u5934\u6587\u4ef6\u4f4d\u7f6e\u548c\u8bb8\u53ef\u8bc1\u3002\n- \u52a8\u6001/\u9759\u6001\u94fe\u63a5\u65b9\u5f0f\u3002\n- \u6240\u6709 opaque handle \u7684 create/free \u51fd\u6570\u3002\n- \u9519\u8bef\u7801\u548c\u9519\u8bef\u6d88\u606f\u89c4\u5219\u3002\n- \u5b57\u7b26\u4e32\u7f16\u7801\u3002\n- \u7ebf\u7a0b\u5b89\u5168\u8bf4\u660e\u3002\n- callback \u751f\u547d\u5468\u671f\u3002\n- \u662f\u5426\u9700\u8981\u5168\u5c40 init/shutdown\u3002\n- \u6700\u5c0f\u53ef\u8fd0\u884c smoke test\u3002\n\n**\u7ed3\u8bba**\n\n\u6700\u521d\u7ea7\u65b9\u6848\u662f\uff1a\u5148\u505a `obmm-sys` + `obmm` \u53cc crate\uff0c`obmm-sys` \u4fdd\u6301\u8584\u7ed1\u5b9a\uff0c`obmm` \u7528 owning handle\u3001`Result`\u3001`Drop`\u3001\u5b57\u7b26\u4e32\u62f7\u8d1d\u548c\u4fdd\u5b88 `!Send + !Sync` \u5efa\u4e00\u4e2a\u6700\u5c0f\u5b89\u5168\u58f3\u3002\u5f53\u524d\u6240\u6709 API \u540d\u79f0\u3001\u7b7e\u540d\u3001\u94fe\u63a5\u53c2\u6570\u90fd\u5fc5\u987b\u89c6\u4e3a `UNKNOWN/placeholder`\uff0c\u4e0d\u80fd\u5f53\u4f5c\u771f\u5b9e obmm \u7ed1\u5b9a\u53d1\u5e03\u3002"}], "grading": {"expectations": [{"text": "Respects the no-scan constraint and does not claim concrete obmm API facts beyond the name obmm.", "passed": true, "evidence": "Output says it did not explore or read headers/docs and marks details UNKNOWN."}, {"text": "Names the fixed six deliverables README.md, ARCHITECTURE.md, BINDING.md, SAFE-API.md, CHECKLIST.md, and ASYNC-ANALYZE.md.", "passed": false, "evidence": "Output is a numbered prose design and does not name the six files."}, {"text": "Uses Unknown or unresolved items for C API shape, resource model, errors, threading, build metadata, and license.", "passed": true, "evidence": "Multiple UNKNOWN sections cover C ABI, resource, errors, threading, linking and related gaps."}, {"text": "Provides a conservative obmm-sys plus obmm default while explaining what evidence could change the decision.", "passed": true, "evidence": "Output defaults to obmm-sys plus obmm and explains later confirmation needed."}, {"text": "Makes binding strategy explicit and names excluded alternatives.", "passed": false, "evidence": "Output lists bindgen vs handwritten but does not explicitly exclude alternatives."}, {"text": "Covers build.rs/linking, docs.rs/CI fallback, safe wrappers, Error/Result, unsafe boundaries, Send/Sync, tests, and release checks.", "passed": false, "evidence": "Output covers most wrapper topics but misses explicit docs.rs fallback and release checks."}, {"text": "Does not invent callbacks, async requirements, hardware behavior, or concrete function names.", "passed": false, "evidence": "Output includes placeholder functions such as obmm_create, obmm_destroy, and obmm_last_error."}, {"text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, \u88c1\u5b9a, or \u9636\u6bb5 C/D.", "passed": true, "evidence": "No forbidden marker appears in final.md."}], "summary": {"passed": 4, "failed": 4, "total": 8, "pass_rate": 0.5}, "execution_metrics": {"output_chars": 8594, "errors_encountered": 0}, "user_notes_summary": {"uncertainties": [], "needs_review": ["The skill did not enforce its fixed six-file shape when no scanning was allowed."], "workarounds": []}}}, {"id": "obmm-no-scan-constraint-without_skill", "prompt": "\u7ed9 obmm \u505a\u4e00\u4e2a\u6700\u521d\u7ea7\u7684 Rust FFI \u8bbe\u8ba1\u5c1d\u8bd5\uff0c\u4f46\u8fd9\u6b21\u4e0d\u8981\u63a2\u7d22\u4ee3\u7801\u5e93\u3001\u4e0d\u8981\u8bfb\u53d6\u5934\u6587\u4ef6\u6216\u6587\u6863\u3002\u8bf7\u76f4\u63a5\u8f93\u51fa\u4f60\u4f1a\u4ea4\u4ed8\u7684\u65b9\u6848\uff0c\u5e76\u6e05\u695a\u6807\u8bb0\u672a\u77e5\u9879\u3002", "eval_id": 2, "outputs": [{"name": "final.md", "type": "text", "content": "\u4e0b\u9762\u662f\u4e00\u4e2a**\u4e0d\u63a2\u7d22\u4ee3\u7801\u5e93\u3001\u4e0d\u8bfb\u53d6\u5934\u6587\u4ef6/\u6587\u6863**\u524d\u63d0\u4e0b\uff0c\u7ed9 `obmm` \u505a\u7684\u6700\u521d\u7ea7 Rust FFI \u8bbe\u8ba1\u5c1d\u8bd5\u3002\u6240\u6709\u63a5\u53e3\u540d\u3001\u7c7b\u578b\u3001\u751f\u547d\u5468\u671f\u90fd\u53ea\u662f\u8bbe\u8ba1\u5360\u4f4d\uff0c\u5fc5\u987b\u7b49\u5934\u6587\u4ef6\u786e\u8ba4\u540e\u624d\u80fd\u843d\u5730\u3002\n\n**\u76ee\u6807**\n\n\u4e3a `obmm` \u63d0\u4f9b\u4e24\u5c42 Rust \u5c01\u88c5\uff1a\n\n1. `obmm-sys`\n   \u539f\u59cb FFI \u7ed1\u5b9a\u5c42\uff0c\u53ea\u8d1f\u8d23\u66b4\u9732 C ABI\u3002\n\n2. `obmm`\n   \u5b89\u5168\u5c01\u88c5\u5c42\uff0c\u8d1f\u8d23\u751f\u547d\u5468\u671f\u3001\u9519\u8bef\u5904\u7406\u3001\u8d44\u6e90\u91ca\u653e\u3001\u7c7b\u578b\u8f6c\u6362\u3002\n\n**\u672a\u77e5\u9879**\n\n- `obmm` \u662f\u5426\u662f C ABI \u5e93\uff0c\u8fd8\u662f C++ \u5e93\u3002\n- \u662f\u5426\u6709\u7a33\u5b9a\u7684 `extern \"C\"` API\u3002\n- \u662f\u5426\u9700\u8981\u521d\u59cb\u5316/\u53cd\u521d\u59cb\u5316\u51fd\u6570\uff0c\u4f8b\u5982 `obmm_init()` / `obmm_shutdown()`\u3002\n- \u662f\u5426\u6709\u5168\u5c40\u72b6\u6001\uff0c\u662f\u5426\u7ebf\u7a0b\u5b89\u5168\u3002\n- \u8d44\u6e90\u53e5\u67c4\u7c7b\u578b\u672a\u77e5\uff0c\u4f8b\u5982 `obmm_context_t*`\u3001`obmm_handle_t*`\u3002\n- \u9519\u8bef\u6a21\u578b\u672a\u77e5\uff1a\u8fd4\u56de `int`\u3001\u679a\u4e3e\u3001NULL\u3001\u8fd8\u662f `errno` \u98ce\u683c\u3002\n- \u5b57\u7b26\u4e32\u7f16\u7801\u672a\u77e5\uff1aUTF-8\u3001\u5e73\u53f0\u7f16\u7801\u3001\u8fd8\u662f\u4e8c\u8fdb\u5236 buffer\u3002\n- \u5185\u5b58\u6240\u6709\u6743\u672a\u77e5\uff1a\u8c03\u7528\u65b9\u91ca\u653e\u3001\u5e93\u91ca\u653e\u3001\u8fd8\u662f\u501f\u7528\u3002\n- \u56de\u8c03\u3001\u5f02\u6b65\u3001\u65e5\u5fd7\u3001\u914d\u7f6e\u7ed3\u6784\u4f53\u5747\u672a\u77e5\u3002\n\n**\u5efa\u8bae\u7ed3\u6784**\n\n```text\nobmm-rs/\n  crates/\n    obmm-sys/\n      Cargo.toml\n      build.rs\n      src/lib.rs\n    obmm/\n      Cargo.toml\n      src/lib.rs\n      src/error.rs\n      src/context.rs\n```\n\n**`obmm-sys` \u8bbe\u8ba1**\n\n\u804c\u8d23\uff1a\n\n- \u94fe\u63a5\u539f\u751f `obmm`\u3002\n- \u66b4\u9732\u4e0d\u5b89\u5168 C \u51fd\u6570\u3002\n- \u4e0d\u505a\u4e1a\u52a1\u5c01\u88c5\u3002\n- \u4e0d\u731c\u6d4b\u751f\u547d\u5468\u671f\u3002\n- \u6240\u6709\u5916\u90e8\u51fd\u6570\u653e\u5728 `unsafe extern \"C\"` \u4e2d\u3002\n\n\u521d\u59cb\u5360\u4f4d\uff1a\n\n```rust\n// obmm-sys/src/lib.rs\n\n#![allow(non_camel_case_types)]\n#![allow(non_snake_case)]\n#![allow(non_upper_case_globals)]\n\nuse std::os::raw::{c_char, c_int, c_void};\n\n#[repr(C)]\npub struct obmm_context_t {\n    _private: [u8; 0],\n}\n\nunsafe extern \"C\" {\n    pub fn obmm_init() -> c_int;\n    pub fn obmm_shutdown() -> c_int;\n\n    pub fn obmm_context_create(out: *mut *mut obmm_context_t) -> c_int;\n    pub fn obmm_context_destroy(ctx: *mut obmm_context_t);\n\n    pub fn obmm_last_error_message() -> *const c_char;\n}\n```\n\n\u8fd9\u4e9b\u51fd\u6570\u540d\u53ea\u662f\u5360\u4f4d\uff0c\u771f\u5b9e\u540d\u79f0\u5fc5\u987b\u4ee5\u540e\u4ece\u5934\u6587\u4ef6\u786e\u8ba4\u3002\n\n**`build.rs` \u521d\u59cb\u7b56\u7565**\n\n\u5982\u679c `obmm` \u5df2\u7ecf\u5b89\u88c5\u5728\u7cfb\u7edf\u8def\u5f84\uff1a\n\n```rust\n// obmm-sys/build.rs\n\nfn main() {\n    println!(\"cargo:rustc-link-lib=obmm\");\n}\n```\n\n\u5982\u679c\u9700\u8981\u672c\u5730\u8def\u5f84\uff0c\u540e\u7eed\u518d\u52a0\uff1a\n\n- `OBMM_LIB_DIR`\n- `OBMM_INCLUDE_DIR`\n- `pkg-config`\n- `cmake`\n- `vcpkg`\n\n\u521d\u59cb\u9636\u6bb5\u4e0d\u8981\u8fc7\u65e9\u5f15\u5165 `bindgen`\uff0c\u9664\u975e\u5934\u6587\u4ef6\u89c4\u6a21\u8f83\u5927\u6216 ABI \u7c7b\u578b\u5f88\u591a\u3002\n\n**\u5b89\u5168\u5c42\u8bbe\u8ba1**\n\n\u6838\u5fc3\u539f\u5219\uff1a\n\n- Rust \u7528\u6237\u4e0d\u76f4\u63a5\u63a5\u89e6\u88f8\u6307\u9488\u3002\n- \u8d44\u6e90\u7528 `Drop` \u81ea\u52a8\u91ca\u653e\u3002\n- fallible API \u8fd4\u56de `Result<T, ObmmError>`\u3002\n- \u6240\u6709 `unsafe` \u96c6\u4e2d\u5728\u5f88\u5c11\u51e0\u4e2a\u6a21\u5757\u3002\n- \u5148\u4e0d\u627f\u8bfa `Send` / `Sync`\uff0c\u9664\u975e\u786e\u8ba4\u7ebf\u7a0b\u5b89\u5168\u3002\n\n```rust\n// obmm/src/context.rs\n\nuse std::ptr::NonNull;\n\npub struct Context {\n    raw: NonNull<obmm_sys::obmm_context_t>,\n}\n\nimpl Context {\n    pub fn new() -> Result<Self, crate::ObmmError> {\n        let mut raw = std::ptr::null_mut();\n\n        let code = unsafe {\n            obmm_sys::obmm_context_create(&mut raw)\n        };\n\n        if code != 0 {\n            return Err(crate::ObmmError::from_code(code));\n        }\n\n        let raw = NonNull::new(raw).ok_or(crate::ObmmError::NullPointer)?;\n\n        Ok(Self { raw })\n    }\n\n    pub(crate) fn as_ptr(&self) -> *mut obmm_sys::obmm_context_t {\n        self.raw.as_ptr()\n    }\n}\n\nimpl Drop for Context {\n    fn drop(&mut self) {\n        unsafe {\n            obmm_sys::obmm_context_destroy(self.raw.as_ptr());\n        }\n    }\n}\n```\n\n**\u9519\u8bef\u7c7b\u578b**\n\n```rust\n// obmm/src/error.rs\n\n#[derive(Debug)]\npub enum ObmmError {\n    Code(i32),\n    NullPointer,\n    InvalidString,\n}\n\nimpl ObmmError {\n    pub fn from_code(code: i32) -> Self {\n        Self::Code(code)\n    }\n}\n```\n\n\u540e\u7eed\u5982\u679c `obmm` \u6709\u660e\u786e\u9519\u8bef\u679a\u4e3e\uff0c\u518d\u6539\u6210\u5f3a\u7c7b\u578b enum\u3002\n\n**\u7ebf\u7a0b\u5b89\u5168\u7b56\u7565**\n\n\u9ed8\u8ba4\uff1a\n\n```rust\n// \u4e0d\u5b9e\u73b0 Send / Sync\n```\n\n\u9664\u975e\u786e\u8ba4\uff1a\n\n- \u6bcf\u4e2a context \u53ef\u8de8\u7ebf\u7a0b\u79fb\u52a8\uff0c\u5219\u53ef\u8003\u8651 `unsafe impl Send for Context`\u3002\n- \u540c\u4e00\u4e2a context \u53ef\u591a\u7ebf\u7a0b\u5171\u4eab\uff0c\u5219\u53ef\u8003\u8651 `unsafe impl Sync for Context`\u3002\n\n\u5728\u6ca1\u6709\u6587\u6863\u524d\uff0c\u4e0d\u5b9e\u73b0\u662f\u4fdd\u5b88\u9009\u62e9\u3002\n\n**\u5b57\u7b26\u4e32\u7b56\u7565**\n\nRust -> C\uff1a\n\n- \u4f7f\u7528 `CString`\u3002\n- \u62d2\u7edd\u5185\u90e8 NUL \u5b57\u8282\u3002\n- \u66b4\u9732 `&str` API\uff0c\u4e0d\u8ba9\u7528\u6237\u624b\u5199 C \u5b57\u7b26\u4e32\u3002\n\nC -> Rust\uff1a\n\n- \u5982\u679c\u8fd4\u56de `const char*` \u4e14\u5e93\u62e5\u6709\u5185\u5b58\uff1a\u590d\u5236\u6210 `String`\u3002\n- \u5982\u679c\u8fd4\u56de\u9700\u8981\u91ca\u653e\u7684\u5b57\u7b26\u4e32\uff1a\u5fc5\u987b\u7ed1\u5b9a\u5bf9\u5e94\u91ca\u653e\u51fd\u6570\uff0c\u4f8b\u5982 `obmm_free_string()`\u3002\n- \u5982\u679c\u957f\u5ea6\u5355\u72ec\u8fd4\u56de\uff1a\u4f18\u5148\u6309 `*const u8 + len` \u5904\u7406\u3002\n\n\u672a\u77e5\u91ca\u653e\u89c4\u5219\u524d\uff0c\u4e0d\u8bbe\u8ba1\u516c\u5f00\u5b57\u7b26\u4e32\u8fd4\u56de API\u3002\n\n**\u5185\u5b58\u6240\u6709\u6743\u7b56\u7565**\n\n\u5efa\u8bae\u89c4\u5219\uff1a\n\n- `create/open/new` \u5bf9\u5e94 Rust `struct`\u3002\n- `destroy/free/delete` \u653e\u8fdb `Drop`\u3002\n- \u501f\u7528\u51fa\u6765\u7684\u6307\u9488\u4e0d\u66b4\u9732\u7ed9\u7528\u6237\u3002\n- \u4ece C \u8fd4\u56de\u7684 buffer \u5fc5\u987b\u786e\u8ba4\u91ca\u653e\u51fd\u6570\u540e\u518d\u5c01\u88c5\u3002\n\n**\u6700\u5c0f\u516c\u5f00 API \u8349\u6848**\n\n```rust\npub use error::ObmmError;\n\npub struct Context { /* private */ }\n\nimpl Context {\n    pub fn new() -> Result<Self, ObmmError>;\n}\n```\n\n\u5148\u53ea\u4ea4\u4ed8\u521d\u59cb\u5316\u548c context \u751f\u547d\u5468\u671f\u3002\u4e0d\u8981\u4e00\u5f00\u59cb\u5305\u88c5\u5168\u90e8 API\u3002\n\n**\u9a8c\u8bc1\u8ba1\u5212**\n\n\u5728\u62ff\u5230\u771f\u5b9e\u5934\u6587\u4ef6\u540e\uff0c\u7b2c\u4e00\u8f6e\u9a8c\u8bc1\u5e94\u5305\u62ec\uff1a\n\n- `cargo check -p obmm-sys`\n- `cargo check -p obmm`\n- \u521b\u5efa\u5e76\u9500\u6bc1 context \u7684 smoke test\n- \u9519\u8bef\u8def\u5f84\u6d4b\u8bd5\n- \u82e5\u6709\u52a8\u6001\u5e93\uff0c\u8fd0\u884c\u65f6\u786e\u8ba4 loader \u80fd\u627e\u5230 `libobmm.so` / `obmm.dll` / `libobmm.dylib`\n\n**\u5f53\u524d\u7ed3\u8bba**\n\n\u8fd9\u7248\u65b9\u6848\u53ea\u80fd\u4f5c\u4e3a `obmm` \u7684 Rust FFI \u8d77\u70b9\uff1a\u5148\u5efa\u7acb `obmm-sys` \u4e0e\u5b89\u5168\u5c42\u5206\u79bb\uff0c\u56f4\u7ed5 opaque handle\u3001`Drop`\u3001`Result`\u3001\u4fdd\u5b88\u7ebf\u7a0b\u5b89\u5168\u6765\u8bbe\u8ba1\u3002\u6240\u6709\u5177\u4f53\u51fd\u6570\u7b7e\u540d\u3001\u9519\u8bef\u7801\u3001\u94fe\u63a5\u65b9\u5f0f\u3001\u5b57\u7b26\u4e32\u548c\u5185\u5b58\u91ca\u653e\u89c4\u5219\u90fd\u5fc5\u987b\u7b49\u771f\u5b9e ABI \u4fe1\u606f\u786e\u8ba4\u540e\u518d\u5b9a\u3002"}], "grading": {"expectations": [{"text": "Respects the no-scan constraint and does not claim concrete obmm API facts beyond the name obmm.", "passed": true, "evidence": "Output explicitly states it is not reading headers/docs and treats functions as placeholders."}, {"text": "Names the fixed six deliverables README.md, ARCHITECTURE.md, BINDING.md, SAFE-API.md, CHECKLIST.md, and ASYNC-ANALYZE.md.", "passed": false, "evidence": "Output does not name the six deliverable files."}, {"text": "Uses Unknown or unresolved items for C API shape, resource model, errors, threading, build metadata, and license.", "passed": true, "evidence": "Output lists many unknowns across ABI, resources, errors and threading."}, {"text": "Provides a conservative obmm-sys plus obmm default while explaining what evidence could change the decision.", "passed": true, "evidence": "Output chooses obmm-sys plus obmm and says real headers must confirm."}, {"text": "Makes binding strategy explicit and names excluded alternatives.", "passed": false, "evidence": "Output says do not introduce bindgen too early but does not explicitly exclude alternatives."}, {"text": "Covers build.rs/linking, docs.rs/CI fallback, safe wrappers, Error/Result, unsafe boundaries, Send/Sync, tests, and release checks.", "passed": false, "evidence": "Output covers build.rs, wrappers and tests but misses docs.rs and release coverage."}, {"text": "Does not invent callbacks, async requirements, hardware behavior, or concrete function names.", "passed": false, "evidence": "Output includes placeholder concrete functions obmm_init, obmm_context_create and related names."}, {"text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, \u88c1\u5b9a, or \u9636\u6bb5 C/D.", "passed": true, "evidence": "No forbidden marker appears in final.md."}], "summary": {"passed": 4, "failed": 4, "total": 8, "pass_rate": 0.5}, "execution_metrics": {"output_chars": 5684, "errors_encountered": 0}, "user_notes_summary": {"uncertainties": [], "needs_review": ["Generic placeholder API names weaken the no-scan case."], "workarounds": []}}}, {"id": "obmm-draft-review-with_skill", "prompt": "\u5ba1\u67e5\u4e0b\u9762\u8fd9\u4efd obmm Rust FFI \u8349\u6848\uff0c\u5e76\u7ed9\u51fa\u8bbe\u8ba1\u7ea7\u4fee\u8ba2\u65b9\u6848\u3002\u53ef\u4ee5\u9759\u6001\u9605\u8bfb obmm/src/libobmm/libobmm.h\u3001CMakeLists.txt \u548c obmm/doc/libobmm.md\uff1b\u4e0d\u8981\u7f16\u8bd1\u6216\u5b9e\u73b0\u4ee3\u7801\u3002\u8349\u6848\uff1a\u53ea\u505a\u4e00\u4e2a obmm crate\uff0c\u4e0d\u62c6 obmm-sys\uff1bbuild.rs \u76f4\u63a5\u94fe\u63a5 -lobmm\uff1b\u7528 bindgen \u5728\u7528\u6237\u6784\u5efa\u65f6\u751f\u6210\u5168\u90e8\u7ed1\u5b9a\uff1bsafe \u5c42\u628a mem_id \u66b4\u9732\u4e3a u64\uff0c\u5bfc\u51fa\u548c\u5f15\u5165\u51fd\u6570\u76f4\u63a5\u8fd4\u56de u64\uff1bstruct obmm_mem_desc \u7528\u666e\u901a Rust struct \u8868\u793a\u5e76\u5305\u542b Vec<u8> priv\uff1b\u6240\u6709 handle \u90fd unsafe impl Send + Sync\uff1b\u9519\u8bef\u53ea\u7528 i32\uff1b\u6682\u65f6\u4e0d\u505a ABI \u68c0\u67e5\u548c docs.rs \u964d\u7ea7\u3002", "eval_id": 3, "outputs": [{"name": "final.md", "type": "text", "content": "\u5df2\u6309 `rust-safe-ffi-design` skill \u5b8c\u6210\u8bbe\u8ba1\u7ea7\u5ba1\u67e5\uff0c\u5e76\u5728\u9ed8\u8ba4\u4f4d\u7f6e\u751f\u6210 6 \u4efd\u4ea4\u4ed8\u6587\u6863\uff1a\n\n- [README.md](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/docs/ffi-design/obmm/README.md)\n- [ARCHITECTURE.md](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/docs/ffi-design/obmm/ARCHITECTURE.md)\n- [BINDING.md](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/docs/ffi-design/obmm/BINDING.md)\n- [SAFE-API.md](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/docs/ffi-design/obmm/SAFE-API.md)\n- [ASYNC-ANALYZE.md](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/docs/ffi-design/obmm/ASYNC-ANALYZE.md)\n- [CHECKLIST.md](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/docs/ffi-design/obmm/CHECKLIST.md)\n\n\u6838\u5fc3\u4fee\u8ba2\u7ed3\u8bba\uff1a\u8349\u6848\u4e0d\u5e94\u53ea\u505a\u5355 crate\uff1b\u5e94\u62c6 `obmm-sys` + `obmm`\u3002\u4e0d\u5efa\u8bae\u9ed8\u8ba4\u7528\u6237\u6784\u5efa\u65f6\u5168\u91cf `bindgen`\uff0c\u8fd9\u4e2a API \u9762\u5f88\u5c0f\u4e14\u5305\u542b flexible array member\uff0c\u9996\u9009\u624b\u5199 raw ABI\u3002safe \u5c42\u4e0d\u5e94\u66b4\u9732\u88f8 `u64 mem_id`\uff0c\u5e94\u4f7f\u7528 `NonZeroU64` newtype \u548c RAII owner\uff1b`obmm_mem_desc` / `obmm_preimport_info` \u4e0d\u80fd\u7528\u666e\u901a Rust struct + `Vec<u8>` \u8868\u793a C ABI\uff0c\u5fc5\u987b\u7528\u8fde\u7eed descriptor buffer\u3002`Send`/`Sync` \u9ed8\u8ba4\u4fdd\u5b88\uff0c\u4e0d\u505a\u65e0\u4f9d\u636e `unsafe impl`\u3002\n\n\u5df2\u6309\u8981\u6c42\u53ea\u505a\u9759\u6001\u9605\u8bfb\uff0c\u6ca1\u6709\u7f16\u8bd1\u6216\u5b9e\u73b0\u4ee3\u7801\u3002\u9a8c\u8bc1\u8fc7 6 \u4e2a\u6587\u4ef6\u9f50\u5168\uff0c\u5e76\u8fd0\u884c\u4e86\u5185\u90e8\u75d5\u8ff9\u68c0\u67e5\uff1a\n\n`rg \"P[0-9]+|FFI-ANALYSIS|general-c-ffi|comparison|\u2192 \u00a7|\u88c1\u5b9a|\u9636\u6bb5 [A-Z]\" docs/ffi-design/obmm`\n\n\u8be5\u68c0\u67e5\u65e0\u8f93\u51fa\uff0c\u8868\u793a\u6ca1\u6709\u6cc4\u6f0f skill \u5185\u90e8 reference \u6807\u8bb0\u3002"}], "grading": {"expectations": [{"text": "Rejects or revises the single-crate-only plan in favor of a clear obmm-sys plus obmm split for publishable bindings.", "passed": true, "evidence": "Final summary says split obmm-sys plus obmm."}, {"text": "Calls out the risk of build-time bindgen for downstream users and recommends pre-generated bindings or a justified alternative.", "passed": true, "evidence": "Final summary rejects default full bindgen and says API is small with FAM, favoring handwritten raw ABI."}, {"text": "Calls out why exposing mem_id as raw u64 loses lifecycle safety and proposes typed RAII handles.", "passed": true, "evidence": "Final summary says not to expose raw u64 mem_id and recommends NonZeroU64 newtype and RAII owner."}, {"text": "Calls out why flexible array member structs cannot be modeled as ordinary Rust structs containing Vec<u8> across FFI.", "passed": true, "evidence": "Final summary says obmm_mem_desc/preimport_info cannot be ordinary Rust struct + Vec and need continuous descriptor buffer."}, {"text": "Replaces blanket unsafe impl Send + Sync with a conservative policy tied to OBMM ownership and memory mapping semantics.", "passed": true, "evidence": "Final summary says Send/Sync default conservative, no ungrounded unsafe impl."}, {"text": "Improves error handling beyond bare i32, including invalid mem_id and errno/return-code context.", "passed": false, "evidence": "The final summary does not describe error handling beyond bare i32; the generated files did, but the user-facing output is only a summary."}, {"text": "Adds ABI/regeneration checks, docs.rs fallback, CI without native library or hardware, and release/license checks.", "passed": false, "evidence": "The final summary only says ABI/docs.rs strategy; it does not cover CI without native library/hardware or release/license checks."}, {"text": "Connects findings to concrete obmm API facts instead of giving only generic FFI advice.", "passed": true, "evidence": "Final summary cites small API surface and flexible array members, but it is less concrete than the without-skill output."}, {"text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, \u88c1\u5b9a, or \u9636\u6bb5 C/D.", "passed": false, "evidence": "final.md includes the internal-marker regex itself: P[0-9]+|FFI-ANALYSIS|general-c-ffi|comparison|\u88c1\u5b9a|\u9636\u6bb5 [A-Z]."}], "summary": {"passed": 6, "failed": 3, "total": 9, "pass_rate": 0.67}, "execution_metrics": {"output_chars": 1577, "errors_encountered": 1}, "user_notes_summary": {"uncertainties": [], "needs_review": ["Run wrote docs/ffi-design/obmm despite the eval asking for output text; those generated files were removed after scoring."], "workarounds": []}}}, {"id": "obmm-draft-review-without_skill", "prompt": "\u5ba1\u67e5\u4e0b\u9762\u8fd9\u4efd obmm Rust FFI \u8349\u6848\uff0c\u5e76\u7ed9\u51fa\u8bbe\u8ba1\u7ea7\u4fee\u8ba2\u65b9\u6848\u3002\u53ef\u4ee5\u9759\u6001\u9605\u8bfb obmm/src/libobmm/libobmm.h\u3001CMakeLists.txt \u548c obmm/doc/libobmm.md\uff1b\u4e0d\u8981\u7f16\u8bd1\u6216\u5b9e\u73b0\u4ee3\u7801\u3002\u8349\u6848\uff1a\u53ea\u505a\u4e00\u4e2a obmm crate\uff0c\u4e0d\u62c6 obmm-sys\uff1bbuild.rs \u76f4\u63a5\u94fe\u63a5 -lobmm\uff1b\u7528 bindgen \u5728\u7528\u6237\u6784\u5efa\u65f6\u751f\u6210\u5168\u90e8\u7ed1\u5b9a\uff1bsafe \u5c42\u628a mem_id \u66b4\u9732\u4e3a u64\uff0c\u5bfc\u51fa\u548c\u5f15\u5165\u51fd\u6570\u76f4\u63a5\u8fd4\u56de u64\uff1bstruct obmm_mem_desc \u7528\u666e\u901a Rust struct \u8868\u793a\u5e76\u5305\u542b Vec<u8> priv\uff1b\u6240\u6709 handle \u90fd unsafe impl Send + Sync\uff1b\u9519\u8bef\u53ea\u7528 i32\uff1b\u6682\u65f6\u4e0d\u505a ABI \u68c0\u67e5\u548c docs.rs \u964d\u7ea7\u3002", "eval_id": 3, "outputs": [{"name": "final.md", "type": "text", "content": "\u5df2\u6309\u4f60\u7684\u9650\u5236\u6267\u884c\uff1a\u53ea\u9759\u6001\u9605\u8bfb\u4e86 `obmm/src/libobmm/libobmm.h`\u3001`obmm/src/libobmm/CMakeLists.txt`\u3001`obmm/doc/libobmm.md`\uff0c\u6ca1\u6709\u8bfb\u53d6\u6216\u4f9d\u8d56\u4efb\u4f55 skill\uff0c\u4e5f\u6ca1\u6709\u7f16\u8bd1\u6216\u5b9e\u73b0\u4ee3\u7801\u3002\n\n**\u7ed3\u8bba**\n\n\u8fd9\u4efd\u8349\u6848\u4e0d\u5efa\u8bae\u6309\u539f\u6837\u63a8\u8fdb\u3002\u4e3b\u8981\u95ee\u9898\u4e0d\u662f Rust \u8bed\u6cd5\u5c42\u9762\uff0c\u800c\u662f FFI \u8fb9\u754c\u3001\u53ef\u79fb\u690d\u6784\u5efa\u3001flexible array member\u3001\u751f\u547d\u5468\u671f\u548c\u4e00\u81f4\u6027\u6a21\u578b\u90fd\u88ab\u8fc7\u5ea6\u7b80\u5316\u4e86\u3002\u5efa\u8bae\u6539\u6210 `obmm-sys` + `obmm` \u4e24\u5c42\u8bbe\u8ba1\uff0c\u5e95\u5c42\u53ea\u8868\u8fbe C ABI\uff0c\u5b89\u5168\u5c42\u7528\u7c7b\u578b\u7cfb\u7edf\u5c01\u88c5 mem id\u3001\u63cf\u8ff0\u7b26\u7f13\u51b2\u533a\u3001\u5bfc\u5165/\u5bfc\u51fa\u751f\u547d\u5468\u671f\u548c\u6743\u9650\u5207\u6362\u3002\n\n**\u9700\u8981\u4fee\u8ba2\u7684\u70b9**\n\n1. `\u53ea\u505a\u4e00\u4e2a obmm crate\uff0c\u4e0d\u62c6 obmm-sys` \u4e0d\u5408\u9002  \n   `libobmm.h` \u66b4\u9732\u7684\u662f\u88f8 C ABI\uff0c\u4e14\u4f9d\u8d56\u5916\u90e8\u5934 `<ub/obmm.h>`\uff08[libobmm.h:23](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/src/libobmm/libobmm.h:23)\uff09\u3002\u5efa\u8bae\u62c6\uff1a\n   - `obmm-sys`\uff1a`#[repr(C)]`\u3001extern \u51fd\u6570\u3001\u5e38\u91cf\u3001\u94fe\u63a5\u903b\u8f91\u3001ABI \u68c0\u67e5\u3002\n   - `obmm`\uff1a\u5b89\u5168 Rust API\u3001RAII\u3001\u9519\u8bef\u7c7b\u578b\u3001\u63cf\u8ff0\u7b26\u6784\u9020/\u89e3\u6790\u3002\n   \n   \u5982\u679c\u6682\u65f6\u4e0d\u60f3\u53d1\u5e03\u4e24\u4e2a crate\uff0c\u4e5f\u81f3\u5c11\u5e94\u5728\u5355 crate \u5185\u90e8\u4fdd\u6301 `ffi`/`sys` \u79c1\u6709\u6a21\u5757\u548c safe \u5c42\u4e25\u683c\u5206\u79bb\u3002\n\n2. `build.rs \u76f4\u63a5\u94fe\u63a5 -lobmm` \u592a\u8106\u5f31  \n   CMake \u5b89\u88c5\u7684\u662f `libobmm.so` \u5230 `lib64`\uff0c\u5934\u6587\u4ef6\u5230 `include`\uff08[CMakeLists.txt:50](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/src/libobmm/CMakeLists.txt:50)\u3001[CMakeLists.txt:51](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/src/libobmm/CMakeLists.txt:51)\uff09\u3002`build.rs` \u5e94\u652f\u6301\uff1a\n   - `OBMM_LIB_DIR` / `OBMM_INCLUDE_DIR`\n   - \u53ef\u9009 `pkg-config`\uff0c\u5982\u679c\u672a\u6765\u9879\u76ee\u8865 `.pc`\n   - `cargo:rustc-link-search=native=...`\n   - `cargo:rustc-link-lib=dylib=obmm`\n   - docs.rs \u6216\u65e0\u7cfb\u7edf\u5e93\u73af\u5883\u4e0b\u7684\u964d\u7ea7\u8def\u5f84\n\n3. `\u7528\u6237\u6784\u5efa\u65f6 bindgen \u751f\u6210\u5168\u90e8\u7ed1\u5b9a` \u98ce\u9669\u9ad8  \n   \u5f53\u524d\u5934\u4f9d\u8d56 `<ub/obmm.h>`\uff0c\u5176\u4e2d\u5305\u542b `OBMM_MAX_LOCAL_NUMA_NODES`\u3001`OBMM_MAX_PRIV_LEN` \u7b49\u5173\u952e\u5e38\u91cf\uff0c\u4f46\u4e0d\u5728 `libobmm.h` \u672c\u6587\u4ef6\u4e2d\u5b9a\u4e49\uff08[libobmm.h:61](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/src/libobmm/libobmm.h:61)\u3001\u6587\u6863\u63d0\u5230\u4e0a\u9650\u5728 [libobmm.md:120](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/doc/libobmm.md:120)\uff09\u3002\u7528\u6237\u6784\u5efa\u65f6 bindgen \u4f1a\u8981\u6c42\u672c\u673a\u5b8c\u6574 C \u5934\u73af\u5883\u3001clang\u3001\u67b6\u6784\u5339\u914d\uff0cdocs.rs \u4e5f\u5bb9\u6613\u5931\u8d25\u3002\n\n   \u5efa\u8bae\uff1a\n   - `obmm-sys` \u9ed8\u8ba4\u63d0\u4f9b\u9884\u751f\u6210\u6216\u624b\u5199\u7684\u6700\u5c0f ABI \u7ed1\u5b9a\u3002\n   - \u63d0\u4f9b `bindgen` feature \u4f9b\u7ef4\u62a4\u8005\u518d\u751f\u6210\uff0c\u4e0d\u4f5c\u4e3a\u666e\u901a\u7528\u6237\u9ed8\u8ba4\u8def\u5f84\u3002\n   - \u53ea\u7ed1\u5b9a\u516c\u5f00 API\uff0c\u4e0d\u5bfc\u51fa\u5168\u91cf bindgen \u566a\u97f3\u3002\n\n4. `mem_id \u66b4\u9732\u4e3a u64\uff0c\u5bfc\u51fa/\u5f15\u5165\u76f4\u63a5\u8fd4\u56de u64` \u4e0d\u5408\u9002  \n   \u6587\u6863\u660e\u786e `OBMM_INVALID_MEMID == 0` \u662f\u9519\u8bef/\u65e0\u6548 ID\uff08[libobmm.h:30](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/src/libobmm/libobmm.h:30)\u3001[libobmm.md:46](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/doc/libobmm.md:46)\uff09\u3002safe \u5c42\u5e94\u4f7f\u7528\uff1a\n   - `struct MemId(NonZeroU64)`\n   - `Result<ExportedMemory, Error>`\n   - `Result<ImportedMemory, Error>`\n   \n   \u88f8 `u64` \u53ea\u5e94\u7559\u5728 `obmm-sys`\u3002\n\n5. `struct obmm_mem_desc \u7528\u666e\u901a Rust struct + Vec<u8> priv` \u662f ABI \u9519\u8bef  \n   C \u7ed3\u6784\u4f53\u4f7f\u7528 flexible array member\uff1a`uint8_t priv[]`\uff08[libobmm.h:44](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/src/libobmm/libobmm.h:44)\uff09\u3002\u6587\u6863\u8981\u6c42\u7528 `sizeof(struct obmm_mem_desc) + priv_len` \u5206\u914d\u8fde\u7eed\u5185\u5b58\uff0c`priv` \u7d27\u968f\u7ed3\u6784\u4f53\u5c3e\u90e8\uff08[libobmm.md:118](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/doc/libobmm.md:118)\u3001[libobmm.md:120](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/doc/libobmm.md:120)\uff09\u3002\n\n   Rust safe \u5c42\u5e94\u8bbe\u8ba1\u6210\uff1a\n   - `MemDescBuf { buf: Vec<MaybeUninit<u8>> }` \u6216 boxed byte buffer\n   - \u5185\u90e8\u6309 C layout \u5199 header + trailing priv\n   - \u5bf9\u5916\u63d0\u4f9b `MemDesc`/`MemDescOwned` \u8bbf\u95ee\u5668\n   - \u4e0d\u628a `priv` \u653e\u8fdb `#[repr(C)] struct` \u7684 `Vec<u8>` \u5b57\u6bb5\n\n   `obmm_preimport_info` \u540c\u7406\uff0c\u4e5f\u6709 `priv[]`\uff08[libobmm.h:58](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/src/libobmm/libobmm.h:58)\uff09\u3002\n\n6. `\u6240\u6709 handle unsafe impl Send + Sync` \u8fc7\u5ea6\u627f\u8bfa  \n   \u6587\u6863\u5f3a\u8c03\u5171\u4eab cacheable \u5185\u5b58\u9700\u8981\u8de8 host \u6743\u9650\u4e00\u81f4\u6027\uff0c\u540c\u4e00\u65f6\u523b\u53ea\u80fd\u5168\u8bfb\u6216\u5355\u5199\uff08[libobmm.md:208](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/doc/libobmm.md:208)-[libobmm.md:211](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/doc/libobmm.md:211)\uff09\u3002\u8fd9\u4e0d\u662f\u666e\u901a Rust \u5185\u5b58\u5171\u4eab\u8bed\u4e49\uff0c\u4e0d\u80fd blanket `Send + Sync`\u3002\n\n   \u5efa\u8bae\uff1a\n   - `MemId` \u4f5c\u4e3a\u7eaf ID \u53ef\u4ee5 `Copy + Send + Sync`\u3002\n   - \u62e5\u6709\u751f\u547d\u5468\u671f\u7684 `ExportedMemory` / `ImportedMemory` \u9ed8\u8ba4\u4e0d\u8981 `Sync`\u3002\n   - `Send` \u4e5f\u8981\u57fa\u4e8e\u5185\u90e8\u662f\u5426\u53ea\u6301\u6709 ID\u3001fd\u3001\u63cf\u8ff0\u7b26\u7f13\u51b2\u533a\u6765\u5224\u65ad\u3002\n   - mmap \u540e\u7684\u53ef\u8bbf\u95ee\u533a\u57df\u9700\u8981\u5355\u72ec\u7c7b\u578b\u8868\u8fbe\u6743\u9650\u72b6\u6001\uff0c\u5982 `MappedNone`\u3001`MappedRead`\u3001`MappedWrite`\uff0c\u4e0d\u8981\u8ba9\u591a\u4e2a\u7ebf\u7a0b\u65e0\u7ea6\u675f\u5171\u4eab\u5199\u6743\u9650\u3002\n\n7. `\u9519\u8bef\u53ea\u7528 i32` \u4fe1\u606f\u4e0d\u8db3  \n   C API \u6709\u4e24\u79cd\u9519\u8bef\u5f62\u6001\uff1a\n   - \u8fd4\u56de `mem_id` \u7684\u51fd\u6570\u7528 `0` \u8868\u793a\u9519\u8bef\uff1a`obmm_export`\u3001`obmm_export_useraddr`\u3001`obmm_import`\uff08[libobmm.h:61](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/src/libobmm/libobmm.h:61)\u3001[libobmm.h:76](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/src/libobmm/libobmm.h:76)\u3001[libobmm.h:78](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/src/libobmm/libobmm.h:78)\uff09\u3002\n   - \u8fd4\u56de `int` \u7684\u51fd\u6570\u7528\u6574\u6570\u72b6\u6001\uff1a`unexport`\u3001`preimport`\u3001`set_ownership` \u7b49\u3002\n\n   safe \u5c42\u5efa\u8bae\uff1a\n   ```rust\n   enum Error {\n       InvalidMemId,\n       ObmmCall { function: &'static str, code: i32 },\n       Io(std::io::Error), // \u4ec5\u5728\u786e\u8ba4 errno \u8bed\u4e49\u540e\u4f7f\u7528\n       InvalidArgument(&'static str),\n       UnsupportedOnDocsRs,\n   }\n   ```\n   \u662f\u5426\u8bfb\u53d6 `errno` \u9700\u8981\u8fdb\u4e00\u6b65\u770b\u51fd\u6570\u7ea7\u6587\u6863\u6216 C \u5b9e\u73b0\uff1b\u4ec5\u51ed\u8fd9\u4e09\u4efd\u6587\u4ef6\u4e0d\u80fd\u65ad\u8a00\u3002\n\n8. `\u6682\u65f6\u4e0d\u505a ABI \u68c0\u67e5\u548c docs.rs \u964d\u7ea7` \u4e0d\u5efa\u8bae  \n   ABI \u98ce\u9669\u96c6\u4e2d\u5728\uff1a\n   - `unsigned long` \u5bbd\u5ea6\n   - `size_t`\n   - `int`\n   - flexible array header \u5927\u5c0f/\u5bf9\u9f50\n   - `OBMM_MAX_LOCAL_NUMA_NODES`\n   - `OBMM_MAX_PRIV_LEN`\n\n   \u81f3\u5c11\u5e94\u5728 `obmm-sys` \u91cc\u7528 `ctest` \u6216\u6784\u5efa\u671f\u5c0f C \u7a0b\u5e8f\u68c0\u67e5 layout\uff1bsafe crate \u5728 docs.rs \u4e0b\u5e94\u8df3\u8fc7\u94fe\u63a5\u7cfb\u7edf\u5e93\uff0c\u53ea\u751f\u6210\u6587\u6863\u548c\u7c7b\u578b\u8bf4\u660e\uff0c\u5426\u5219\u7528\u6237\u770b\u5230\u7684 crate \u6587\u6863\u4e0d\u53ef\u7528\u3002\n\n**\u5efa\u8bae\u7684\u65b0\u8bbe\u8ba1**\n\n\u5e95\u5c42\uff1a\n\n```text\nobmm-sys\n  - ffi::mem_id = u64\n  - ffi::obmm_mem_desc_header\n  - ffi::obmm_preimport_info_header\n  - extern \"C\" functions\n  - link libobmm.so\n  - layout/constant checks\n```\n\n\u5b89\u5168\u5c42\uff1a\n\n```text\nobmm\n  - MemId(NonZeroU64)\n  - MemDescBuf / PreimportInfoBuf\n  - ExportRequest / ImportRequest / PreimportRequest\n  - ExportedMemory { id, desc }\n  - ImportedMemory { id, numa_id }\n  - PreimportedMemory { info }\n  - Ownership APIs with explicit Prot\n  - Drop-based unexport/unimport/unpreimport, plus explicit close methods\n```\n\n\u751f\u547d\u5468\u671f\u5e94\u4f53\u73b0\u6587\u6863\u65f6\u5e8f\uff1a\u5148 export\uff0c\u518d import\uff0c\u8bbf\u95ee\u540e\u5148 unimport\uff0c\u518d unexport\uff08[libobmm.md:243](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/doc/libobmm.md:243)-[libobmm.md:251](/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/obmm/doc/libobmm.md:251)\uff09\u3002safe API \u4e0d\u80fd\u5b8c\u5168\u963b\u6b62\u8de8\u8fdb\u7a0b/\u8de8 host \u8bef\u7528\uff0c\u4f46\u81f3\u5c11\u4e0d\u80fd\u628a\u9519\u8bef\u65f6\u5e8f\u5305\u88c5\u6210\u201c\u5929\u7136\u5b89\u5168\u201d\u3002\n\n**\u6700\u7ec8\u5efa\u8bae**\n\n\u8349\u6848\u5e94\u6539\u4e3a\uff1a\u62c6 sys/safe \u5c42\uff1b\u4e0d\u8981\u628a FAM \u6620\u5c04\u6210\u666e\u901a Rust struct\uff1b\u4e0d\u8981\u8ba9 safe API \u8fd4\u56de\u88f8 `u64`\uff1b\u4e0d\u8981 blanket `Send + Sync`\uff1b\u9ed8\u8ba4\u4e0d\u8981\u7528\u6237\u6784\u5efa\u65f6\u5168\u91cf bindgen\uff1b\u8865 ABI \u68c0\u67e5\u548c docs.rs \u964d\u7ea7\u3002\u8fd9\u6837\u8bbe\u8ba1\u624d\u914d\u5f97\u4e0a OBMM \u8fd9\u79cd\u6d89\u53ca\u5185\u6838\u6a21\u5757\u3001NUMA\u3001mmap \u6743\u9650\u548c\u8de8 host \u4e00\u81f4\u6027\u7684 FFI\u3002"}], "grading": {"expectations": [{"text": "Rejects or revises the single-crate-only plan in favor of a clear obmm-sys plus obmm split for publishable bindings.", "passed": true, "evidence": "Output rejects single crate and recommends obmm-sys plus obmm."}, {"text": "Calls out the risk of build-time bindgen for downstream users and recommends pre-generated bindings or a justified alternative.", "passed": true, "evidence": "Output rejects default user build-time bindgen and recommends pre-generated or handwritten minimal ABI."}, {"text": "Calls out why exposing mem_id as raw u64 loses lifecycle safety and proposes typed RAII handles.", "passed": true, "evidence": "Output proposes MemId(NonZeroU64), ExportedMemory, ImportedMemory."}, {"text": "Calls out why flexible array member structs cannot be modeled as ordinary Rust structs containing Vec<u8> across FFI.", "passed": true, "evidence": "Output explains priv[] trailing storage and why Vec in repr(C) is wrong."}, {"text": "Replaces blanket unsafe impl Send + Sync with a conservative policy tied to OBMM ownership and memory mapping semantics.", "passed": true, "evidence": "Output ties conservative Send/Sync to ownership and mapped memory semantics."}, {"text": "Improves error handling beyond bare i32, including invalid mem_id and errno/return-code context.", "passed": true, "evidence": "Output distinguishes invalid mem id, return code and possible errno context."}, {"text": "Adds ABI/regeneration checks, docs.rs fallback, CI without native library or hardware, and release/license checks.", "passed": false, "evidence": "Output includes ABI and docs.rs, but CI without native library/hardware and release/license checks are thin."}, {"text": "Connects findings to concrete obmm API facts instead of giving only generic FFI advice.", "passed": true, "evidence": "Output cites libobmm.h/CMake/doc facts and line references."}, {"text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, \u88c1\u5b9a, or \u9636\u6bb5 C/D.", "passed": true, "evidence": "No forbidden marker appears in final.md."}], "summary": {"passed": 8, "failed": 1, "total": 9, "pass_rate": 0.89}, "execution_metrics": {"output_chars": 7793, "errors_encountered": 0}, "user_notes_summary": {"uncertainties": [], "needs_review": ["This baseline gave a better direct review because it did not switch to file-generation mode."], "workarounds": []}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "rust-safe-ffi-design", "skill_path": "/home/muxi/workspace/rust_workspace/rust-ffi-project-analyze/.codex/skills/rust-safe-ffi-design", "executor_model": "gpt-5.5 via codex exec", "timestamp": "2026-05-19T00:00:00+08:00", "evals_run": [1, 2, 3], "runs_per_configuration": 1}, "runs": [{"eval_id": 1, "eval_name": "obmm-full-static-design", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 11, "failed": 0, "total": 11, "time_seconds": 0, "tokens": 0, "tool_calls": 0, "errors": 0}}, {"eval_id": 1, "eval_name": "obmm-full-static-design", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.64, "passed": 7, "failed": 4, "total": 11, "time_seconds": 0, "tokens": 0, "tool_calls": 0, "errors": 0}}, {"eval_id": 2, "eval_name": "obmm-no-scan-constraint", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 0.5, "passed": 4, "failed": 4, "total": 8, "time_seconds": 0, "tokens": 0, "tool_calls": 0, "errors": 0}}, {"eval_id": 2, "eval_name": "obmm-no-scan-constraint", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.5, "passed": 4, "failed": 4, "total": 8, "time_seconds": 0, "tokens": 0, "tool_calls": 0, "errors": 0}}, {"eval_id": 3, "eval_name": "obmm-draft-review", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 0.67, "passed": 6, "failed": 3, "total": 9, "time_seconds": 0, "tokens": 0, "tool_calls": 0, "errors": 1}}, {"eval_id": 3, "eval_name": "obmm-draft-review", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.89, "passed": 8, "failed": 1, "total": 9, "time_seconds": 0, "tokens": 0, "tool_calls": 0, "errors": 0}}], "run_summary": {"with_skill": {"pass_rate": {"mean": 0.72, "stddev": 0.21, "min": 0.5, "max": 1.0}, "time_seconds": {"mean": 0, "stddev": 0, "min": 0, "max": 0}, "tokens": {"mean": 0, "stddev": 0, "min": 0, "max": 0}}, "without_skill": {"pass_rate": {"mean": 0.68, "stddev": 0.16, "min": 0.5, "max": 0.89}, "time_seconds": {"mean": 0, "stddev": 0, "min": 0, "max": 0}, "tokens": {"mean": 0, "stddev": 0, "min": 0, "max": 0}}, "delta": {"pass_rate": "+0.04", "time_seconds": "+0", "tokens": "+0"}}, "notes": ["With-skill wins the full static design case because it enforces the six-deliverable architecture and release checklist.", "Both configurations tie on the no-scan case; neither preserved the fixed six-file shape and both invented placeholder function names.", "Without-skill wins the draft-review case because the skill-enabled run switched into file-generation mode and returned only a short summary.", "Timing and token metrics are set to 0 because codex exec does not persist structured duration/token data in these output files."]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

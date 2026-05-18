@@ -1,0 +1,16 @@
+{
+  "expectations": [
+    {"text": "Rejects or revises the single-crate-only plan in favor of a clear obmm-sys plus obmm split for publishable bindings.", "passed": true, "evidence": "Output rejects single crate and recommends obmm-sys plus obmm."},
+    {"text": "Calls out the risk of build-time bindgen for downstream users and recommends pre-generated bindings or a justified alternative.", "passed": true, "evidence": "Output rejects default user build-time bindgen and recommends pre-generated or handwritten minimal ABI."},
+    {"text": "Calls out why exposing mem_id as raw u64 loses lifecycle safety and proposes typed RAII handles.", "passed": true, "evidence": "Output proposes MemId(NonZeroU64), ExportedMemory, ImportedMemory."},
+    {"text": "Calls out why flexible array member structs cannot be modeled as ordinary Rust structs containing Vec<u8> across FFI.", "passed": true, "evidence": "Output explains priv[] trailing storage and why Vec in repr(C) is wrong."},
+    {"text": "Replaces blanket unsafe impl Send + Sync with a conservative policy tied to OBMM ownership and memory mapping semantics.", "passed": true, "evidence": "Output ties conservative Send/Sync to ownership and mapped memory semantics."},
+    {"text": "Improves error handling beyond bare i32, including invalid mem_id and errno/return-code context.", "passed": true, "evidence": "Output distinguishes invalid mem id, return code and possible errno context."},
+    {"text": "Adds ABI/regeneration checks, docs.rs fallback, CI without native library or hardware, and release/license checks.", "passed": false, "evidence": "Output includes ABI and docs.rs, but CI without native library/hardware and release/license checks are thin."},
+    {"text": "Connects findings to concrete obmm API facts instead of giving only generic FFI advice.", "passed": true, "evidence": "Output cites libobmm.h/CMake/doc facts and line references."},
+    {"text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.", "passed": true, "evidence": "No forbidden marker appears in final.md."}
+  ],
+  "summary": {"passed": 8, "failed": 1, "total": 9, "pass_rate": 0.89},
+  "execution_metrics": {"output_chars": 7793, "errors_encountered": 0},
+  "user_notes_summary": {"uncertainties": [], "needs_review": ["This baseline gave a better direct review because it did not switch to file-generation mode."], "workarounds": []}
+}

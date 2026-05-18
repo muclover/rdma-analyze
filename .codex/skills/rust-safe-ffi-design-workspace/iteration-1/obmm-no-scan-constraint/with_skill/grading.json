@@ -1,0 +1,15 @@
+{
+  "expectations": [
+    {"text": "Respects the no-scan constraint and does not claim concrete obmm API facts beyond the name obmm.", "passed": true, "evidence": "Output says it did not explore or read headers/docs and marks details UNKNOWN."},
+    {"text": "Names the fixed six deliverables README.md, ARCHITECTURE.md, BINDING.md, SAFE-API.md, CHECKLIST.md, and ASYNC-ANALYZE.md.", "passed": false, "evidence": "Output is a numbered prose design and does not name the six files."},
+    {"text": "Uses Unknown or unresolved items for C API shape, resource model, errors, threading, build metadata, and license.", "passed": true, "evidence": "Multiple UNKNOWN sections cover C ABI, resource, errors, threading, linking and related gaps."},
+    {"text": "Provides a conservative obmm-sys plus obmm default while explaining what evidence could change the decision.", "passed": true, "evidence": "Output defaults to obmm-sys plus obmm and explains later confirmation needed."},
+    {"text": "Makes binding strategy explicit and names excluded alternatives.", "passed": false, "evidence": "Output lists bindgen vs handwritten but does not explicitly exclude alternatives."},
+    {"text": "Covers build.rs/linking, docs.rs/CI fallback, safe wrappers, Error/Result, unsafe boundaries, Send/Sync, tests, and release checks.", "passed": false, "evidence": "Output covers most wrapper topics but misses explicit docs.rs fallback and release checks."},
+    {"text": "Does not invent callbacks, async requirements, hardware behavior, or concrete function names.", "passed": false, "evidence": "Output includes placeholder functions such as obmm_create, obmm_destroy, and obmm_last_error."},
+    {"text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.", "passed": true, "evidence": "No forbidden marker appears in final.md."}
+  ],
+  "summary": {"passed": 4, "failed": 4, "total": 8, "pass_rate": 0.5},
+  "execution_metrics": {"output_chars": 8594, "errors_encountered": 0},
+  "user_notes_summary": {"uncertainties": [], "needs_review": ["The skill did not enforce its fixed six-file shape when no scanning was allowed."], "workarounds": []}
+}

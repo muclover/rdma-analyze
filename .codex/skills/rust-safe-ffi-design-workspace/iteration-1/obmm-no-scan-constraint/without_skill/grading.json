@@ -1,0 +1,15 @@
+{
+  "expectations": [
+    {"text": "Respects the no-scan constraint and does not claim concrete obmm API facts beyond the name obmm.", "passed": true, "evidence": "Output explicitly states it is not reading headers/docs and treats functions as placeholders."},
+    {"text": "Names the fixed six deliverables README.md, ARCHITECTURE.md, BINDING.md, SAFE-API.md, CHECKLIST.md, and ASYNC-ANALYZE.md.", "passed": false, "evidence": "Output does not name the six deliverable files."},
+    {"text": "Uses Unknown or unresolved items for C API shape, resource model, errors, threading, build metadata, and license.", "passed": true, "evidence": "Output lists many unknowns across ABI, resources, errors and threading."},
+    {"text": "Provides a conservative obmm-sys plus obmm default while explaining what evidence could change the decision.", "passed": true, "evidence": "Output chooses obmm-sys plus obmm and says real headers must confirm."},
+    {"text": "Makes binding strategy explicit and names excluded alternatives.", "passed": false, "evidence": "Output says do not introduce bindgen too early but does not explicitly exclude alternatives."},
+    {"text": "Covers build.rs/linking, docs.rs/CI fallback, safe wrappers, Error/Result, unsafe boundaries, Send/Sync, tests, and release checks.", "passed": false, "evidence": "Output covers build.rs, wrappers and tests but misses docs.rs and release coverage."},
+    {"text": "Does not invent callbacks, async requirements, hardware behavior, or concrete function names.", "passed": false, "evidence": "Output includes placeholder concrete functions obmm_init, obmm_context_create and related names."},
+    {"text": "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D.", "passed": true, "evidence": "No forbidden marker appears in final.md."}
+  ],
+  "summary": {"passed": 4, "failed": 4, "total": 8, "pass_rate": 0.5},
+  "execution_metrics": {"output_chars": 5684, "errors_encountered": 0},
+  "user_notes_summary": {"uncertainties": [], "needs_review": ["Generic placeholder API names weaken the no-scan case."], "workarounds": []}
+}

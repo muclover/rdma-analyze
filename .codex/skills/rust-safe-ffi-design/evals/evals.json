@@ -1,0 +1,68 @@
+{
+  "skill_name": "rust-safe-ffi-design",
+  "evals": [
+    {
+      "id": 1,
+      "name": "obmm-full-static-design",
+      "prompt": "为当前仓库的 obmm/src/libobmm 设计一套可发布的 Rust FFI 架构。允许静态阅读头文件、CMake 和 obmm/doc 中必要文档；不要编译 C 项目，不要安装依赖，不要实现代码。请输出方案设计文档。",
+      "expected_output": "Reviewable Rust FFI design documentation for libobmm that derives concrete decisions from libobmm.h, CMake, and docs.",
+      "files": [
+        "obmm/src/libobmm/libobmm.h",
+        "obmm/src/libobmm/CMakeLists.txt",
+        "obmm/doc/libobmm.md"
+      ],
+      "expectations": [
+        "Produces organized design documentation with clear sections or files for architecture, binding/build, safe API, testing/release, and async/protocol analysis when applicable.",
+        "Identifies libobmm's concrete API families: export/unexport, import/unimport, preimport/unpreimport, ownership, and query.",
+        "Accounts for mem_id as the resource handle and OBMM_INVALID_MEMID as the invalid/error sentinel.",
+        "Accounts for struct obmm_mem_desc and struct obmm_preimport_info using flexible array members with priv_len/priv allocation rules.",
+        "Recommends a publishable obmm-sys plus obmm crate split, with any third async/protocol layer explicitly deferred or justified.",
+        "Chooses a binding path and excludes at least one alternative path with a reason.",
+        "Specifies build.rs/linking details including links = \"obmm\", system linking, env overrides, and docs.rs or CI fallback behavior.",
+        "Defines safe API ownership boundaries with RAII guards for export/import/preimport lifecycles and Result/Error mapping.",
+        "Defines Send/Sync policy conservatively for memory handles and ownership transitions.",
+        "Includes ABI/regeneration/smoke testing and release checks including license and semver.",
+        "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "obmm-no-scan-constraint",
+      "prompt": "给 obmm 做一个最初级的 Rust FFI 设计尝试，但这次不要探索代码库、不要读取头文件或文档。请输出方案设计文档，并清楚标记未知项。",
+      "expected_output": "Constrained Rust FFI design documentation that preserves Unknown API facts while still covering release-oriented FFI design concerns.",
+      "files": [],
+      "expectations": [
+        "Respects the no-scan constraint and does not claim concrete obmm API facts beyond the name obmm.",
+        "Produces organized design documentation with clear sections or files for architecture, binding/build, safe API, testing/release, and async/protocol analysis when applicable.",
+        "Uses Unknown or unresolved items for C API shape, resource model, errors, threading, build metadata, and license.",
+        "Provides a conservative obmm-sys plus obmm default while explaining what evidence could change the decision.",
+        "Makes binding strategy explicit and names excluded alternatives.",
+        "Covers build.rs/linking, docs.rs/CI fallback, safe wrappers, Error/Result, unsafe boundaries, Send/Sync, tests, and release checks.",
+        "Does not invent callbacks, async requirements, hardware behavior, or concrete function names.",
+        "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "obmm-draft-review",
+      "prompt": "审查下面这份 obmm Rust FFI 草案，并输出设计级修订方案文档。可以静态阅读 obmm/src/libobmm/libobmm.h、CMakeLists.txt 和 obmm/doc/libobmm.md；不要编译或实现代码。草案：只做一个 obmm crate，不拆 obmm-sys；build.rs 直接链接 -lobmm；用 bindgen 在用户构建时生成全部绑定；safe 层把 mem_id 暴露为 u64，导出和引入函数直接返回 u64；struct obmm_mem_desc 用普通 Rust struct 表示并包含 Vec<u8> priv；所有 handle 都 unsafe impl Send + Sync；错误只用 i32；暂时不做 ABI 检查和 docs.rs 降级。",
+      "expected_output": "Design revision documentation that identifies concrete risks in the draft and replaces them with a safer publishable architecture for libobmm.",
+      "files": [
+        "obmm/src/libobmm/libobmm.h",
+        "obmm/src/libobmm/CMakeLists.txt",
+        "obmm/doc/libobmm.md"
+      ],
+      "expectations": [
+        "Rejects or revises the single-crate-only plan in favor of a clear obmm-sys plus obmm split for publishable bindings.",
+        "Calls out the risk of build-time bindgen for downstream users and recommends pre-generated bindings or a justified alternative.",
+        "Calls out why exposing mem_id as raw u64 loses lifecycle safety and proposes typed RAII handles.",
+        "Calls out why flexible array member structs cannot be modeled as ordinary Rust structs containing Vec<u8> across FFI.",
+        "Replaces blanket unsafe impl Send + Sync with a conservative policy tied to OBMM ownership and memory mapping semantics.",
+        "Improves error handling beyond bare i32, including invalid mem_id and errno/return-code context.",
+        "Adds ABI/regeneration checks, docs.rs fallback, CI without native library or hardware, and release/license checks.",
+        "Connects findings to concrete obmm API facts instead of giving only generic FFI advice.",
+        "Does not leak internal reference markers such as P1, FFI-ANALYSIS, general-c-ffi, comparison, 裁定, or 阶段 C/D."
+      ]
+    }
+  ]
+}
