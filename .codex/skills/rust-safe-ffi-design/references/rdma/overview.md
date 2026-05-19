@@ -9,10 +9,10 @@
 
 | 文档 | 内容 |
 |------|------|
-| [comparison/general-c-ffi.md](../comparison/general-c-ffi.md) | **权威 P1–P11 总表**、模式归纳、例外/专题 |
+| [comparison.md](../comparison.md) | **权威 P1–P11 总表**、模式归纳、例外/专题 |
 | 本文档 | P5–P11 补充深读；**五 Category 对照**（§0.7） |
 
-下文 §1 为 P5–P11 **列展开**；与 `general-c-ffi.md` §1 冲突时以 general-c-ffi 为准并应在本文件注明取舍。
+下文 §1 为 P5–P11 **列展开**；与 `comparison.md` §1 冲突时以 `comparison.md` 为准并应在本文件注明取舍。
 
 **分析完成**：已对 RDMA 下 **7 个样本（P5–P11）** 完成静态 FFI 画像；单项目全文见 `docs/rdma/**/FFI-ANALYSIS.md`（索引：[README.md](./README.md)）。**未执行** `cargo build`；各单篇文档内不做跨项目技术对比。
 
@@ -65,13 +65,13 @@ flowchart TB
 
 | 序号 | 项目 | 分层 | 绑定方式 | 链接策略 | 定位 |
 |------|------|------|----------|----------|------|
-| P5 | [rust-ibverbs](./category-1/rust-ibverbs/FFI-ANALYSIS.md) | `-sys` + safe | bindgen `verbs.h`；手写 `ibv_wc` | `links=ibverbs`；默认 cmake vendored rdma-core | ibverbs **经典双 crate** 入门 |
-| P6 | [rdma](./category-2/rdma/FFI-ANALYSIS.md) | 单 crate | bindgen + `ibverbs.rs` 手写 inline | pkg-config（ibverbs ≥1.14.41，rdmacm ≥1.3.41） | 低层 API + 多 example（含 async 实验） |
-| P7 | [rust-rdma-io](./category-3/rust-rdma-io/FFI-ANALYSIS.md) | sys → safe → tonic / quinn | bnd + WinMD；`wrapper.c` 导出 ~96 个 inline | 系统库 + `cc` 编 shim | **最大 workspace**；`Transport` trait + 上层协议适配 |
-| P8 | [rdma-sys](./category-4/rdma-sys/FFI-ANALYSIS.md) | 纯 `-sys` | bindgen + `verbs.rs` / `types.rs` 补全 | pkg-config（较旧版本门槛） | 薄绑定；大量 blocklist 复杂类型 |
-| P9 | [async-rdma](./category-4/async-rdma/FFI-ANALYSIS.md) | 单 crate 高层框架 | 依赖 crates.io `rdma-sys`；本仓 `build.rs` 只 link | 同 P8 运行时库 | **Agent** + CQ 异步；MR 元数据 / 控制面 |
-| P10 | [rdma-mummy-sys](./category-5/rdma-mummy-sys/FFI-ANALYSIS.md) | 纯 `-sys` | bindgen + cmake **静态链** mummy | 编译期不依赖系统 dev 包 | **CI / 无硬件友好**；运行时再 dlopen 真库 |
-| P11 | [sideway](./category-5/sideway/FFI-ANALYSIS.md) | safe（依赖 P10） | 绑定在 `rdma-mummy-sys` | 编译 mummy；**运行**要装 rdma-core | 新 **`ibv_wr_*`** API + **`PostSendGuard`** 类型状态 |
+| P5 | [rust-ibverbs](./rust-ibverbs.md) | `-sys` + safe | bindgen `verbs.h`；手写 `ibv_wc` | `links=ibverbs`；默认 cmake vendored rdma-core | ibverbs **经典双 crate** 入门 |
+| P6 | [rdma](./rdma.md) | 单 crate | bindgen + `ibverbs.rs` 手写 inline | pkg-config（ibverbs ≥1.14.41，rdmacm ≥1.3.41） | 低层 API + 多 example（含 async 实验） |
+| P7 | [rust-rdma-io](./rust-rdma-io.md) | sys → safe → tonic / quinn | bnd + WinMD；`wrapper.c` 导出 ~96 个 inline | 系统库 + `cc` 编 shim | **最大 workspace**；`Transport` trait + 上层协议适配 |
+| P8 | [rdma-sys](./rdma-sys.md) | 纯 `-sys` | bindgen + `verbs.rs` / `types.rs` 补全 | pkg-config（较旧版本门槛） | 薄绑定；大量 blocklist 复杂类型 |
+| P9 | [async-rdma](./async-rdma.md) | 单 crate 高层框架 | 依赖 crates.io `rdma-sys`；本仓 `build.rs` 只 link | 同 P8 运行时库 | **Agent** + CQ 异步；MR 元数据 / 控制面 |
+| P10 | [rdma-mummy-sys](./rdma-mummy-sys.md) | 纯 `-sys` | bindgen + cmake **静态链** mummy | 编译期不依赖系统 dev 包 | **CI / 无硬件友好**；运行时再 dlopen 真库 |
+| P11 | [sideway](./sideway.md) | safe（依赖 P10） | 绑定在 `rdma-mummy-sys` | 编译 mummy；**运行**要装 rdma-core | 新 **`ibv_wr_*`** API + **`PostSendGuard`** 类型状态 |
 
 ### 0.3 共性（面向阶段 C / D）
 
@@ -114,7 +114,7 @@ mummy + 现代 safe      P11（sideway → rdma-mummy-sys）
 
 ## 0.7 五 Category 对照（阶段 C）
 
-与 [general-c-ffi.md](../comparison/general-c-ffi.md) §1 列定义对齐；此处按 **plan category 编号** 归纳演进，**非**技术优劣排序。
+与 [comparison.md](../comparison.md) §1 列定义对齐；此处按 **plan category 编号** 归纳演进，**非**技术优劣排序。
 
 ### 0.7.1 Category 对照总表
 
@@ -328,7 +328,7 @@ RDMA 绑定的**首要难点**是 C 头中大量 **`static inline`** 与 **union
 
 | 项 | 原因 |
 |----|------|
-| P1–P4 与 RDMA 的横向对照 | 见 [comparison/general-c-ffi.md](../comparison/general-c-ffi.md) §1、§3–§5 |
+| P1–P4 与 RDMA 的横向对照 | 见 [comparison.md](../comparison.md) §1、§3–§5 |
 | 五 Category 对照 | 本文 §0.7 |
 | 性能、延迟、吞吐 | 非目标 |
 | 各厂商 OFED / 驱动差异 | 未读上游驱动实现 |

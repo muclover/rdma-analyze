@@ -10,7 +10,7 @@
 
 | 文档 | 内容 |
 |------|------|
-| [rdma-overview.md](../rdma/rdma-overview.md) | P5–P11 补充深读；**五 Category 对照** |
+| [rdma/overview.md](./rdma/overview.md) | P5–P11 补充深读；**五 Category 对照** |
 | 单项目 | `docs/**/FFI-ANALYSIS.md` |
 
 ---
@@ -19,25 +19,25 @@
 
 | 项 | 约定 |
 |----|------|
-| **项目** | P1 `libz-sys` · P2 `curl-rust` · P3 `rust-openssl` · P4 `zstd-rs` · P5–P11 RDMA（见 [rdma/README.md](../rdma/README.md)） |
+| **项目** | P1 `libz-sys` · P2 `curl-rust` · P3 `rust-openssl` · P4 `zstd-rs` · P5–P11 RDMA（见 [rdma/README.md](./rdma/README.md)） |
 | **权威总表** | 本文 §1（D01–D17） |
-| **RDMA 细读** | [rdma-overview.md](../rdma/rdma-overview.md)（列定义与 §1 对齐） |
+| **RDMA 细读** | [rdma/overview.md](./rdma/overview.md)（列定义与 §1 对齐） |
 
 ### 0.1 项目索引
 
 | P | 路径 | 单项目分析 |
 |---|------|------------|
-| P1 | `cases/libz-sys.md` | [libz-sys.md](../cases/libz-sys.md) |
-| P2 | `cases/curl-rust.md` | [curl-rust.md](../cases/curl-rust.md) |
-| P3 | `cases/rust-openssl.md` | [rust-openssl.md](../cases/rust-openssl.md) |
-| P4 | `cases/zstd-rs.md` | [zstd-rs.md](../cases/zstd-rs.md) |
-| P5 | `rdma/category-1/rust-ibverbs/` | [FFI-ANALYSIS.md](../rdma/category-1/rust-ibverbs/FFI-ANALYSIS.md) |
-| P6 | `rdma/category-2/rdma/` | [FFI-ANALYSIS.md](../rdma/category-2/rdma/FFI-ANALYSIS.md) |
-| P7 | `rdma/category-3/rust-rdma-io/` | [FFI-ANALYSIS.md](../rdma/category-3/rust-rdma-io/FFI-ANALYSIS.md) |
-| P8 | `rdma/category-4/rdma-sys/` | [FFI-ANALYSIS.md](../rdma/category-4/rdma-sys/FFI-ANALYSIS.md) |
-| P9 | `rdma/category-4/async-rdma/` | [FFI-ANALYSIS.md](../rdma/category-4/async-rdma/FFI-ANALYSIS.md) |
-| P10 | `rdma/category-5/rdma-mummy-sys/` | [FFI-ANALYSIS.md](../rdma/category-5/rdma-mummy-sys/FFI-ANALYSIS.md) |
-| P11 | `rdma/category-5/sideway/` | [FFI-ANALYSIS.md](../rdma/category-5/sideway/FFI-ANALYSIS.md) |
+| P1 | `cases/libz-sys.md` | [libz-sys.md](./cases/libz-sys.md) |
+| P2 | `cases/curl-rust.md` | [curl-rust.md](./cases/curl-rust.md) |
+| P3 | `cases/rust-openssl.md` | [rust-openssl.md](./cases/rust-openssl.md) |
+| P4 | `cases/zstd-rs.md` | [zstd-rs.md](./cases/zstd-rs.md) |
+| P5 | `rdma/rust-ibverbs.md` | [rust-ibverbs.md](./rdma/rust-ibverbs.md) |
+| P6 | `rdma/rdma.md` | [rdma.md](./rdma/rdma.md) |
+| P7 | `rdma/rust-rdma-io.md` | [rust-rdma-io.md](./rdma/rust-rdma-io.md) |
+| P8 | `rdma/rdma-sys.md` | [rdma-sys.md](./rdma/rdma-sys.md) |
+| P9 | `rdma/async-rdma.md` | [async-rdma.md](./rdma/async-rdma.md) |
+| P10 | `rdma/rdma-mummy-sys.md` | [rdma-mummy-sys.md](./rdma/rdma-mummy-sys.md) |
+| P11 | `rdma/sideway.md` | [sideway.md](./rdma/sideway.md) |
 
 ---
 
@@ -157,7 +157,7 @@
 
 ## 3. 模式归纳（架构决策向）
 
-供 [decision-rules.md](../../core/decision-rules.md) 背景核对的**选项分类**（非规范性推荐）。
+供 [decision-rules.md](./core/decision-rules.md) 背景核对的**选项分类**（非规范性推荐）。
 
 | 模式 ID | 决策问题（简） | 描述 | 代表项目 | 索引 |
 |---------|----------------|------|----------|------|
@@ -285,7 +285,7 @@
 
 | 项 | 原因 |
 |----|------|
-| P5–P11 Category 级对照细表 | 见 [rdma-overview.md](../rdma/rdma-overview.md) §0.7 |
+| P5–P11 Category 级对照细表 | 见 [rdma/overview.md](./rdma/overview.md) §0.7 |
 | P9 与**本工作区 P8** 符号级差异 | P9 用 crates.io `rdma-sys`，未 vendored 对比 |
 | 性能、延迟、厂商 OFED | 非目标 |
 | `cargo build` / ABI 实测 | 阶段 A/B 裁定不构建 |

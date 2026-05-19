@@ -7,10 +7,10 @@
 | 层级 | 角色 | 读取时机 |
 |------|------|----------|
 | `core/` | 干净执行手册，可转化为交付物结构和判断规则 | 每次执行必读 |
-| `evidence/` | case study、横向材料、RDMA 专题等内部证据 | 仅在目标库画像匹配或决策不确定时选读 |
+| `cases/`、`rdma/`、`comparison.md` | case study、横向材料、RDMA 专题等内部证据 | 仅在目标库画像匹配或决策不确定时选读 |
 | `maintenance/` | reference 来源、同步说明和维护记录 | 维护 reference 包时读 |
 
-`core/` 不应包含样本编号、研究阶段术语或内部路径痕迹。`evidence/` 可以保留这些内部材料，但只能辅助判断，不能直接复制到用户交付物。
+`core/` 不应包含样本编号、研究阶段术语或内部路径痕迹。`cases/`、`rdma/`、`comparison.md` 可以保留这些内部材料，但只能辅助判断，不能直接复制到用户交付物。
 
 ## 必读路径
 
@@ -24,16 +24,16 @@
 
 ## 条件路由
 
-按目标 C 库画像选择少量 evidence，通常最多 1-2 个最相似材料。
+按目标 C 库画像选择少量内部材料，通常最多 1-2 个最相似材料。
 
 | 目标库画像 | 选读 reference |
 |------------|----------------|
-| 只需要裸 FFI，`build.rs`、系统库、vendored 切换复杂 | [evidence/cases/libz-sys.md](./evidence/cases/libz-sys.md) |
-| 双 crate、回调、panic 不能跨 FFI、multi/event API | [evidence/cases/curl-rust.md](./evidence/cases/curl-rust.md) |
-| 大 workspace、多后端、错误栈、手写 + bindgen 混合 | [evidence/cases/rust-openssl.md](./evidence/cases/rust-openssl.md) |
-| 三层 `sys -> safe -> ergonomic API`、预生成 bindgen、流式 API | [evidence/cases/zstd-rs.md](./evidence/cases/zstd-rs.md) |
-| verbs、rdma-core、ops 表、inline 导出、无硬件 CI | [evidence/rdma/README.md](./evidence/rdma/README.md) 与 [evidence/rdma/rdma-overview.md](./evidence/rdma/rdma-overview.md) |
-| 无法在单一 case 中定位，需要横向模式核对 | [evidence/comparison/general-c-ffi.md](./evidence/comparison/general-c-ffi.md) |
+| 只需要裸 FFI，`build.rs`、系统库、vendored 切换复杂 | [cases/libz-sys.md](./cases/libz-sys.md) |
+| 双 crate、回调、panic 不能跨 FFI、multi/event API | [cases/curl-rust.md](./cases/curl-rust.md) |
+| 大 workspace、多后端、错误栈、手写 + bindgen 混合 | [cases/rust-openssl.md](./cases/rust-openssl.md) |
+| 三层 `sys -> safe -> ergonomic API`、预生成 bindgen、流式 API | [cases/zstd-rs.md](./cases/zstd-rs.md) |
+| verbs、rdma-core、ops 表、inline 导出、无硬件 CI | [rdma/README.md](./rdma/README.md) 与 [rdma/overview.md](./rdma/overview.md) |
+| 无法在单一 case 中定位，需要横向模式核对 | [comparison.md](./comparison.md) |
 
 ## 决策到交付物映射
 
@@ -60,7 +60,6 @@
 ## 维护建议
 
 - `core/` 保持短、规范、可直接执行。
-- `evidence/` 可以较长，但只能按需读取。
-- 若移动 evidence 文件，必须同步更新本 router 和 `SKILL.md` 的相对链接。
+- `cases/`、`rdma/`、`comparison.md` 可以较长，但只能按需读取。
+- 若移动 reference 文件，必须同步更新本 router 和 `SKILL.md` 的相对链接。
 - 维护副本来源时读取 [maintenance/SOURCE.md](./maintenance/SOURCE.md)。
-
