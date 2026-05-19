@@ -8,7 +8,6 @@
 |------|------|----------|
 | `core/` | 干净执行手册，可转化为交付物结构和判断规则 | 每次执行必读 |
 | `cases/`、`rdma/`、`comparison.md` | case study、横向材料、RDMA 专题等内部证据 | 仅在目标库画像匹配或决策不确定时选读 |
-| `maintenance/` | reference 来源、同步说明和维护记录 | 维护 reference 包时读 |
 
 `core/` 不应包含样本编号、研究阶段术语或内部路径痕迹。`cases/`、`rdma/`、`comparison.md` 可以保留这些内部材料，但只能辅助判断，不能直接复制到用户交付物。
 
@@ -62,4 +61,3 @@
 - `core/` 保持短、规范、可直接执行。
 - `cases/`、`rdma/`、`comparison.md` 可以较长，但只能按需读取。
 - 若移动 reference 文件，必须同步更新本 router 和 `SKILL.md` 的相对链接。
-- 维护副本来源时读取 [maintenance/SOURCE.md](./maintenance/SOURCE.md)。
